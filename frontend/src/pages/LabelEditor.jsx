@@ -369,17 +369,65 @@ export default function LabelEditor({ onBack, currentTemplate }) {
         ctx.strokeStyle = el.strokeColor || '#000000';
         ctx.lineWidth = el.strokeWidth || 1;
         
-        // Apply line style (solid or dashed)
+        // Apply line style
         if (el.lineStyle === 'dashed') {
           ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + w, y);
+          ctx.stroke();
+        } else if (el.lineStyle === 'dotted') {
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + w, y);
+          ctx.stroke();
+        } else if (el.lineStyle === 'double') {
+          // Double line - draw 2 parallel lines
+          const spacing = (el.strokeWidth || 1) + 1;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(x, y - spacing);
+          ctx.lineTo(x + w, y - spacing);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(x, y + spacing);
+          ctx.lineTo(x + w, y + spacing);
+          ctx.stroke();
+        } else if (el.lineStyle === 'doubleDashed') {
+          // Double dashed line
+          const spacing = (el.strokeWidth || 1) + 1;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.moveTo(x, y - spacing);
+          ctx.lineTo(x + w, y - spacing);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(x, y + spacing);
+          ctx.lineTo(x + w, y + spacing);
+          ctx.stroke();
+        } else if (el.lineStyle === 'doubleDotted') {
+          // Double dotted line
+          const spacing = (el.strokeWidth || 1) + 1;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x, y - spacing);
+          ctx.lineTo(x + w, y - spacing);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(x, y + spacing);
+          ctx.lineTo(x + w, y + spacing);
+          ctx.stroke();
         } else {
           ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + w, y);
+          ctx.stroke();
         }
-        
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + w, y + h);
-        ctx.stroke();
         ctx.setLineDash([]); // Reset line dash
       } else if (el.type === 'shape') {
         ctx.fillStyle = '#ddd';
@@ -1017,10 +1065,10 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                     height: 1, 
                     strokeColor: '#000', 
                     strokeWidth: 1,
-                    lineStyle: 'double'
+                    lineStyle: 'dotted'
                   })}
                 >
-                  <div style={{ borderBottom: '5px double #000', width: '100%' }}></div>
+                  <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
                 </Button>
                 <Button 
                   block
@@ -1031,11 +1079,47 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                     width: 50, 
                     height: 1, 
                     strokeColor: '#000', 
-                    strokeWidth: 2,
-                    lineStyle: 'dotted'
+                    strokeWidth: 1,
+                    lineStyle: 'double'
                   })}
                 >
-                  <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
+                  <div style={{ borderBottom: '5px double #000', width: '100%' }}></div>
+                </Button>
+                <Button 
+                  block
+                  style={{ textAlign: 'left', padding: '8px 12px', display: 'flex', alignItems: 'center' }}
+                  onClick={() => addElement('line', { 
+                    x: 10, 
+                    y: 10, 
+                    width: 50, 
+                    height: 1, 
+                    strokeColor: '#000', 
+                    strokeWidth: 1,
+                    lineStyle: 'doubleDashed'
+                  })}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', height: 12, justifyContent: 'center' }}>
+                    <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
+                    <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
+                  </div>
+                </Button>
+                <Button 
+                  block
+                  style={{ textAlign: 'left', padding: '8px 12px', display: 'flex', alignItems: 'center' }}
+                  onClick={() => addElement('line', { 
+                    x: 10, 
+                    y: 10, 
+                    width: 50, 
+                    height: 1, 
+                    strokeColor: '#000', 
+                    strokeWidth: 1,
+                    lineStyle: 'doubleDotted'
+                  })}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', height: 12, justifyContent: 'center' }}>
+                    <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
+                    <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
+                  </div>
                 </Button>
               </div>
             </div>
@@ -1178,13 +1262,53 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                     style={{ flex: 1 }}
                     onChange={v => updateSelected({ lineStyle: v })}
                     options={[
-                      { value: 'solid', label: '实线' }, 
-                      { value: 'dashed', label: '虚线' }
+                      { 
+                        value: 'solid', 
+                        label: (
+                          <div style={{ borderBottom: '2px solid #000', width: 80, height: 0 }}></div>
+                        ) 
+                      }, 
+                      { 
+                        value: 'dashed', 
+                        label: (
+                          <div style={{ borderBottom: '2px dashed #000', width: 80, height: 0 }}></div>
+                        ) 
+                      },
+                      { 
+                        value: 'dotted', 
+                        label: (
+                          <div style={{ borderBottom: '2px dotted #000', width: 80, height: 0 }}></div>
+                        ) 
+                      },
+                      { 
+                        value: 'double', 
+                        label: (
+                          <div style={{ borderBottom: '4px double #000', width: 80, height: 0 }}></div>
+                        ) 
+                      },
+                      { 
+                        value: 'doubleDashed', 
+                        label: (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: 80, height: 12, justifyContent: 'center' }}>
+                            <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
+                            <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
+                          </div>
+                        ) 
+                      },
+                      { 
+                        value: 'doubleDotted', 
+                        label: (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: 80, height: 12, justifyContent: 'center' }}>
+                            <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
+                            <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
+                          </div>
+                        ) 
+                      }
                     ]} 
                   />
                 </div>
 
-                <div className="prop-row">
+                <div className="prop-row" style={{ marginTop: 12 }}>
                   <span style={{ marginRight: 8 }}>粗细:</span>
                   <InputNumber 
                     value={currentElement.strokeWidth || 1} 
