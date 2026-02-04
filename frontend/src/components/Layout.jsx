@@ -4,7 +4,8 @@ import LabelEditor from '../pages/LabelEditor';
 import LabelTemplates from '../pages/LabelTemplates';
 
 export default function LabelPrintLayout() {
-  const [activeTab, setActiveTab] = useState('editor');
+  const [activeTab, setActiveTab] = useState('templates');
+  const [currentTemplate, setCurrentTemplate] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('posToken');
@@ -63,33 +64,27 @@ export default function LabelPrintLayout() {
                       <div style={{ width: '100%', position: 'sticky', top: 0, zIndex: 5, flexShrink: 0 }}>
                         <div className="Styling_NavigationContainer" style={{ minHeight: '50px', display: 'flex', alignItems: 'center', background: 'white', borderBottom: '1px solid rgba(0, 0, 0, 0.05)', boxShadow: 'rgba(0, 0, 0, 0.05) 0px 1px 3px' }}>
                           <div style={{ display: 'flex', minHeight: '60px', gap: 0, paddingRight: '30px' }}>
-                            {['编辑器', '模板管理'].map((tab, idx) => (
-                              <div
-                                key={idx}
-                                className={`Styling_item_Container ${
-                                  idx === 0 ? (activeTab === 'editor' ? 'active' : '') : 
-                                  (activeTab === 'templates' ? 'active' : '')
-                                }`}
-                                onClick={() => setActiveTab(idx === 0 ? 'editor' : 'templates')}
-                                style={{
-                                  fontSize: '15px',
-                                  background: 'white',
-                                  border: '0.1px solid rgba(0, 0, 0, 0.1)',
-                                  padding: '12px 20px',
-                                  cursor: 'pointer',
-                                  borderBottom: activeTab === (idx === 0 ? 'editor' : 'templates') ? '3px solid #007aff' : 'none',
-                                  transition: 'all 0.2s',
-                                  color: activeTab === (idx === 0 ? 'editor' : 'templates') ? '#000' : '#888',
-                                  fontWeight: activeTab === (idx === 0 ? 'editor' : 'templates') ? '600' : '500',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {tab}
-                              </div>
-                            ))}
+                            <div
+                              className="Styling_item_Container active"
+                              onClick={() => setActiveTab('templates')}
+                              style={{
+                                fontSize: '15px',
+                                background: 'white',
+                                border: '0.1px solid rgba(0, 0, 0, 0.1)',
+                                padding: '12px 20px',
+                                cursor: 'pointer',
+                                borderBottom: '3px solid #007aff',
+                                transition: 'all 0.2s',
+                                color: '#000',
+                                fontWeight: '600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              标签模板
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -98,12 +93,20 @@ export default function LabelPrintLayout() {
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                         {activeTab === 'editor' && (
                           <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-                            <LabelEditor />
+                            <LabelEditor 
+                              onBack={() => setActiveTab('templates')} 
+                              currentTemplate={currentTemplate}
+                            />
                           </div>
                         )}
                         {activeTab === 'templates' && (
                           <div style={{ flex: 1, display: 'flex', minHeight: 0, overflowY: 'auto' }}>
-                            <LabelTemplates />
+                            <LabelTemplates 
+                              onEditTemplate={(template) => {
+                                setCurrentTemplate(template);
+                                setActiveTab('editor');
+                              }}
+                            />
                           </div>
                         )}
                       </div>
