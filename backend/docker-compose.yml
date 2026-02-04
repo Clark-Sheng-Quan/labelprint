@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: label_printer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_label_data:/var/lib/postgresql/data
+    networks:
+      - labelprint-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: label_printer
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+    networks:
+      - labelprint-network
+    volumes:
+      - ./src:/app/src
+    command: npm run dev
+
+volumes:
+  postgres_label_data:
+    driver: local
+
+networks:
+  labelprint-network:
+    driver: bridge
+
