@@ -1,12 +1,23 @@
 import axios from 'axios';
+import { POS_TOKEN } from '../config/constants';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002';
+const API_BASE_URL = ''
 
 const client = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
+});
+
+// Add request interceptor to inject token
+client.interceptors.request.use((config) => {
+  if (POS_TOKEN) {
+    config.headers.Authorization = `Bearer ${POS_TOKEN}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export const labelAPI = {

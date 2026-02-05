@@ -1,7 +1,11 @@
 import express from 'express';
 import { LabelTemplate } from '../models/LabelTemplate.js';
+import { verifyTokenMiddleware } from '../services/tokenService.js';
 
 const router = express.Router();
+
+// Apply token verification middleware to all routes
+router.use(verifyTokenMiddleware());
 
 // Get all templates for business
 router.get('/templates/:businessId', async (req, res) => {

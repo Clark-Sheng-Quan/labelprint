@@ -1693,7 +1693,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
                     <ColorPicker 
                       value={currentElement.strokeColor || '#000000'} 
-                      onChange={(color) => updateSelected({ strokeColor: color.toHexString() })} 
+                      onChange={(color) => updateSelected({ strokeColor: color.toHexString() })}
+                      presets={[
+                        {
+                          label: 'Common',
+                          colors: ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff6b6b', '#4ecdc4', '#45b7d1']
+                        }
+                      ]}
                     />
                     <Input 
                       value={currentElement.strokeColor || '#000000'} 
@@ -1754,7 +1760,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
                      <ColorPicker 
                        value={currentElement.color} 
-                       onChange={(color) => updateSelected({ color: color.toHexString() })} 
+                       onChange={(color) => updateSelected({ color: color.toHexString() })}
+                       presets={[
+                         {
+                           label: 'Common',
+                           colors: ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff6b6b', '#4ecdc4', '#45b7d1']
+                         }
+                       ]}
                      />
                      <Input 
                        value={currentElement.color} 
