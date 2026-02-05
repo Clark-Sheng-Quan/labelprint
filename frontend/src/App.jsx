@@ -1,12 +1,15 @@
 import React from 'react';
+import { LanguageProvider } from './locales/LanguageContext';
 import Layout from './components/Layout';
 import './App.css';
 
 function App() {
   return (
-    <div className="app">
-      <Layout />
-    </div>
+    <LanguageProvider>
+      <div className="app">
+        <Layout />
+      </div>
+    </LanguageProvider>
   );
 }
 

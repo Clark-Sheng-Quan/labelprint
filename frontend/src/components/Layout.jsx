@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import './Layout.css';
 import LabelEditor from '../pages/LabelEditor';
 import LabelTemplates from '../pages/LabelTemplates';
+import { useLanguage } from '../locales/LanguageContext';
 
 export default function LabelPrintLayout() {
+  const { language, switchLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState('templates');
   const [currentTemplate, setCurrentTemplate] = useState(null);
 
@@ -24,9 +26,9 @@ export default function LabelPrintLayout() {
                 <div id="Portal_LabelTab" className="Styling_ManagemntTab" style={{ height: '100%', zIndex: 11, background: 'rgb(245, 245, 249)', paddingTop: '23px' }}>
                   <div className="hide-scroll" style={{ overflowY: 'auto', maxHeight: '100%', position: 'relative', scrollbarWidth: 'none' }}>
                     <div style={{ padding: '15px', background: 'rgb(42, 36, 56)', marginBottom: '17px', borderRadius: '0px', boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 6px' }}>
-                      <div style={{ width: '100%', color: 'white', fontSize: '15px', fontWeight: '650', padding: '0px', margin: '0px' }}>
+                      {/* <div style={{ width: '100%', color: 'white', fontSize: '15px', fontWeight: '650', padding: '0px', margin: '0px' }}>
                         标签编辑器
-                      </div>
+                      </div> */}
                       <div style={{ width: '100%', color: 'rgba(255,255,255,0.6)', fontSize: '12px', fontWeight: '400', paddingTop: '5px', margin: '0px' }}>
                         Label Printer
                       </div>
@@ -36,6 +38,45 @@ export default function LabelPrintLayout() {
                       <div style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px', marginBottom: '10px', padding: '8px 10px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '5px' }}>
                         {localStorage.getItem('posEmail') || '用户'}
                       </div>
+                      
+                      {/* Language Switcher */}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px', marginBottom: '8px' }}>
+                        <button 
+                          onClick={() => switchLanguage('en')}
+                          style={{
+                            flex: 1,
+                            padding: '8px',
+                            background: language === 'en' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          EN
+                        </button>
+                        <button 
+                          onClick={() => switchLanguage('zh')}
+                          style={{
+                            flex: 1,
+                            padding: '8px',
+                            background: language === 'zh' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          中文
+                        </button>
+                      </div>
+                      
                       <button onClick={handleLogout} className="logout-btn" style={{
                         width: '100%',
                         padding: '10px',
@@ -49,7 +90,7 @@ export default function LabelPrintLayout() {
                         fontWeight: '600',
                         transition: 'all 0.2s'
                       }}>
-                        退出
+                        Logout
                       </button>
                     </div>
                   </div>
@@ -83,7 +124,7 @@ export default function LabelPrintLayout() {
                                 whiteSpace: 'nowrap'
                               }}
                             >
-                              标签模板
+                              Label Templates
                             </div>
                           </div>
                         </div>

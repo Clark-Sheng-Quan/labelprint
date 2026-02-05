@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button, Input, InputNumber, Select, message, Radio, Divider, Tooltip, ColorPicker } from 'antd';
 import { labelAPI } from '../services/api';
 import { POS_BUSINESS_ID } from '../config/constants';
+import { useLanguage } from '../locales/LanguageContext';
 import {
   SaveOutlined,
   DeleteOutlined,
@@ -29,30 +30,34 @@ import {
   EditOutlined,
   SearchOutlined,
   MenuOutlined,
-  ColumnWidthOutlined
+  ColumnWidthOutlined,
+  UndoOutlined,
+  RedoOutlined
 } from '@ant-design/icons';
 import './LabelEditor.css';
 
 const { TextArea } = Input;
 
 const PARAM_LIST = [
-  { name: '店名', key: 'shopName' },
-  { name: '商品名称', key: 'productName' },
-  { name: '单价', key: 'price' },
-  { name: '会员价', key: 'memberPrice' },
-  { name: '批发价', key: 'wholesalePrice' },
-  { name: '条码', key: 'barcode' },
-  { name: '商品条码', key: 'productBarcode' },
-  { name: 'KDS识别码', key: 'kdsCode' },
-  { name: '制作暗码', key: 'productionCode' },
+  { name: 'Store Name', key: 'storeName' },
+  { name: 'Product Name', key: 'productName' },
+  { name: 'Options', key: 'options' },
+  { name: 'Unit Price', key: 'unitPrice' },
+  { name: 'Order Number', key: 'orderNumber' },
+  { name: 'Order Id', key: 'orderId' },
+  { name: 'Item Id', key: 'itemId' },
+  { name: 'Created At', key: 'createdAt' },
+  { name: 'Note', key: 'note' },
+  { name: 'Pick Method', key: 'pickMethod' },
 ];
 
 export default function LabelEditor({ onBack, currentTemplate }) {
+  const { getTranslation } = useLanguage();
   const canvasRef = useRef(null);
   const imageCacheRef = useRef({}); // Cache for loaded images
   const [elements, setElements] = useState([]);
   const [selectedElement, setSelectedElement] = useState(null);
-  const [templateName, setTemplateName] = useState('未命名');
+  const [templateName, setTemplateName] = useState('');
   const [templateId, setTemplateId] = useState(null);
   const [canvasWidth, setCanvasWidth] = useState(60);
   const [canvasHeight, setCanvasHeight] = useState(40);
@@ -64,12 +69,14 @@ export default function LabelEditor({ onBack, currentTemplate }) {
   useEffect(() => {
     if (currentTemplate) {
       setTemplateId(currentTemplate.id);
-      setTemplateName(currentTemplate.name || '未命名');
+      setTemplateName(currentTemplate.name || getTranslation('untitled'));
       setCanvasWidth(currentTemplate.width || 60);
       setCanvasHeight(currentTemplate.height || 40);
       setElements(currentTemplate.templateConfig?.elements || []);
+    } else {
+      setTemplateName(getTranslation('untitled'));
     }
-  }, [currentTemplate]);
+  }, [currentTemplate, getTranslation]);
 
   // Undo/Redo & Clipboard State
   const [clipboard, setClipboard] = useState(null);
@@ -100,13 +107,118 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     resizeHandle: null, // 'nw', 'ne', 'sw', 'se'
     startX: 0,
     startY: 0,
-    initialEl: null // Snapshot of element before drag/resize
+    initialEl: null, // Snapshot of element before drag/resize
+    selectedIds: [], // IDs of selected elements at drag start
+    initialEls: {} // Snapshots of all selected elements for multi-select drag
   });
+  const [alignGuides, setAlignGuides] = useState({ vertical: [], horizontal: [] });
+  const [selectedElements, setSelectedElements] = useState([]); // Array of selected element IDs
+  const [selectionBox, setSelectionBox] = useState(null); // { x, y, w, h } for visual selection box
 
   // Helpers
   const getScale = () => 8 * (zoom / 100);
 
   const roundTo1Decimal = (num) => Math.round(num * 10) / 10;
+  const SNAP_THRESHOLD = 1; // mm
+
+  const getSnappedPosition = (proposed, currentEl) => {
+    let snappedX = proposed.x;
+    let snappedY = proposed.y;
+    let bestXDiff = SNAP_THRESHOLD + 0.0001;
+    let bestYDiff = SNAP_THRESHOLD + 0.0001;
+    let guideX = null;
+    let guideY = null;
+
+    const others = elements.filter(el => el.id !== currentEl.id);
+    others.forEach(other => {
+      const otherLeft = other.x;
+      const otherRight = other.x + other.width;
+      const otherCenter = other.x + other.width / 2;
+
+      const currentLeft = snappedX;
+      const currentRight = snappedX + currentEl.width;
+      const currentCenter = snappedX + currentEl.width / 2;
+
+      // Position-based X alignment
+      const xCandidates = [
+        { diff: Math.abs(currentLeft - otherLeft), target: otherLeft, offset: 0 },
+        { diff: Math.abs(currentCenter - otherCenter), target: otherCenter, offset: currentEl.width / 2 },
+        { diff: Math.abs(currentRight - otherRight), target: otherRight, offset: currentEl.width }
+      ];
+
+      xCandidates.forEach(c => {
+        if (c.diff <= SNAP_THRESHOLD && c.diff < bestXDiff) {
+          bestXDiff = c.diff;
+          snappedX = c.target - c.offset;
+          guideX = c.target;
+        }
+      });
+
+      const otherTop = other.y;
+      const otherBottom = other.y + other.height;
+      const otherMiddle = other.y + other.height / 2;
+
+      const currentTop = snappedY;
+      const currentBottom = snappedY + currentEl.height;
+      const currentMiddle = snappedY + currentEl.height / 2;
+
+      // Position-based Y alignment
+      const yCandidates = [
+        { diff: Math.abs(currentTop - otherTop), target: otherTop, offset: 0 },
+        { diff: Math.abs(currentMiddle - otherMiddle), target: otherMiddle, offset: currentEl.height / 2 },
+        { diff: Math.abs(currentBottom - otherBottom), target: otherBottom, offset: currentEl.height }
+      ];
+
+      yCandidates.forEach(c => {
+        if (c.diff <= SNAP_THRESHOLD && c.diff < bestYDiff) {
+          bestYDiff = c.diff;
+          snappedY = c.target - c.offset;
+          guideY = c.target;
+        }
+      });
+
+      // Spacing-based X alignment (gap snapping)
+      const leftGapDiff = Math.abs((otherRight) - currentLeft); // Other's right to current's left
+      const rightGapDiff = Math.abs(currentRight - otherLeft); // Current's right to other's left
+
+      if (leftGapDiff <= SNAP_THRESHOLD && leftGapDiff < bestXDiff) {
+        bestXDiff = leftGapDiff;
+        snappedX = otherRight;
+        guideX = otherRight;
+      }
+
+      if (rightGapDiff <= SNAP_THRESHOLD && rightGapDiff < bestXDiff) {
+        bestXDiff = rightGapDiff;
+        snappedX = otherLeft - currentEl.width;
+        guideX = otherLeft;
+      }
+
+      // Spacing-based Y alignment (gap snapping)
+      const topGapDiff = Math.abs(otherBottom - currentTop); // Other's bottom to current's top
+      const bottomGapDiff = Math.abs(currentBottom - otherTop); // Current's bottom to other's top
+
+      if (topGapDiff <= SNAP_THRESHOLD && topGapDiff < bestYDiff) {
+        bestYDiff = topGapDiff;
+        snappedY = otherBottom;
+        guideY = otherBottom;
+      }
+
+      if (bottomGapDiff <= SNAP_THRESHOLD && bottomGapDiff < bestYDiff) {
+        bestYDiff = bottomGapDiff;
+        snappedY = otherTop - currentEl.height;
+        guideY = otherTop;
+      }
+    });
+
+    return {
+      x: snappedX,
+      y: snappedY,
+      guides: {
+        vertical: guideX !== null ? [guideX] : [],
+        horizontal: guideY !== null ? [guideY] : []
+      }
+    };
+  };
 
   const getHandleRects = (el, scale) => {
     const x = el.x * scale;
@@ -306,9 +418,15 @@ export default function LabelEditor({ onBack, currentTemplate }) {
         ctx.fillStyle = '#f0f0f0';
         ctx.fillRect(x, y, w, h);
         ctx.fillStyle = '#666';
-        ctx.font = '10px Arial';
+        const fontSize = Math.max(h * 0.1);
+        ctx.font = `${fontSize}px Arial`;
         ctx.textAlign = 'center';
-        ctx.fillText(el.type === 'barcode' ? 'Barcode' : 'QR', x + w/2, y + h/2 - 5);
+        if (el.type === 'barcode') {
+          ctx.fillText('Barcode', x + w/2, y + h/2 - 5);
+        } else {
+          const contentName = el.qrcodeContent === 'tea_machine' ? 'Tea Machine' : 'QR';
+          ctx.fillText(`${contentName} QR`, x + w/2, y + h/2 - 5);
+        }
       } else if (el.type === 'image') {
         // Draw image with rounded corners using clip
         const borderRadius = el.borderRadius || 0;
@@ -436,14 +554,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
 
       // Draw selection border (only if not rotated or handle rotation visually)
       // Note: For simplicity, selection border rotates with the context
-      if (selectedElement === el.id) {
+      if (selectedElement === el.id || selectedElements.includes(el.id)) {
         ctx.strokeStyle = '#0084ff';
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, w, h); // Draw exactly on border
 
-        // Draw resize handles
-        // We draw handles *without* rotation context to keep them axis-aligned? 
-        // No, standard behavior is handles rotate with element.
+        // Draw resize handles (only for single selection)
+        if (selectedElement === el.id) {
         
         const handles = getHandleRects(el, scale);
         // Recalculate handles based on unrotated coordinates in local space?
@@ -470,15 +587,53 @@ export default function LabelEditor({ onBack, currentTemplate }) {
            ctx.fillRect(loc.x, loc.y, size, size);
            ctx.strokeRect(loc.x, loc.y, size, size);
         });
+        }
       }
       
       ctx.restore();
     });
+
+    // Draw selection box
+    if (selectionBox) {
+      ctx.save();
+      ctx.strokeStyle = '#0084ff';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+      ctx.fillStyle = 'rgba(0, 132, 255, 0.1)';
+      ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+      ctx.restore();
+    }
+
+    if (alignGuides.vertical.length || alignGuides.horizontal.length) {
+      ctx.save();
+      ctx.strokeStyle = '#ff4d4f';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+
+      alignGuides.vertical.forEach(xMm => {
+        const xPx = xMm * scale;
+        ctx.beginPath();
+        ctx.moveTo(xPx, 0);
+        ctx.lineTo(xPx, pxHeight);
+        ctx.stroke();
+      });
+
+      alignGuides.horizontal.forEach(yMm => {
+        const yPx = yMm * scale;
+        ctx.beginPath();
+        ctx.moveTo(0, yPx);
+        ctx.lineTo(pxWidth, yPx);
+        ctx.stroke();
+      });
+
+      ctx.restore();
+    }
   };
 
   useEffect(() => {
     drawCanvas();
-  }, [elements, selectedElement, canvasWidth, canvasHeight, zoom]);
+  }, [elements, selectedElement, selectedElements, canvasWidth, canvasHeight, zoom, alignGuides, selectionBox]);
 
 
   // Interaction Handlers
@@ -493,7 +648,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
   const handleSave = async () => {
     try {
       if (!templateName.trim()) {
-        message.error('请输入模板名称');
+        message.error(getTranslation('enterTemplateNameError'));
         return;
       }
 
@@ -507,14 +662,12 @@ export default function LabelEditor({ onBack, currentTemplate }) {
       if (templateId) {
         // Update existing template
         await labelAPI.updateTemplate(templateId, templateData);
-        message.success('保存成功');
       } else {
         // Create new template
         const response = await labelAPI.createTemplate({
           businessId: POS_BUSINESS_ID,
           ...templateData
         });
-        message.success('创建成功');
         // Update the template ID after creation
         setTemplateId(response.data.data.id);
       }
@@ -523,7 +676,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
       onBack();
     } catch (error) {
       console.error(error);
-      message.error('保存失败');
+      message.error(getTranslation('saveFailed'));
     }
   };
 
@@ -576,17 +729,56 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     }
 
     if (hitElement) {
-      setSelectedElement(hitElement.id);
+      // Check if clicking on an already selected element (in multi-select mode)
+      const isAlreadySelected = selectedElements.includes(hitElement.id);
+      
+      if (isAlreadySelected && selectedElements.length > 1) {
+        // Keep multi-select, store initial positions of ALL selected elements
+        const initialEls = {};
+        selectedElements.forEach(id => {
+          const el = elements.find(e => e.id === id);
+          if (el) {
+            initialEls[id] = { ...el };
+          }
+        });
+        setDragState({
+          isDragging: true,
+          isResizing: false,
+          resizeHandle: null,
+          startX: x,
+          startY: y,
+          initialEl: { ...hitElement },
+          selectedIds: [...selectedElements],
+          initialEls: initialEls
+        });
+      } else {
+        // Single select: clear multi-select and select only this element
+        setSelectedElement(hitElement.id);
+        setSelectedElements([hitElement.id]);
+        setDragState({
+          isDragging: true,
+          isResizing: false,
+          resizeHandle: null,
+          startX: x,
+          startY: y,
+          initialEl: { ...hitElement },
+          selectedIds: [],
+          initialEls: {}
+        });
+      }
+    } else {
+      // Start selection box
+      setSelectedElement(null);
+      setSelectedElements([]);
+      setSelectionBox({ x, y, w: 0, h: 0, startX: x, startY: y });
       setDragState({
-        isDragging: true,
+        isDragging: false,
         isResizing: false,
         resizeHandle: null,
         startX: x,
         startY: y,
-        initialEl: { ...hitElement }
+        initialEl: null
       });
-    } else {
-      setSelectedElement(null);
     }
   };
 
@@ -641,6 +833,16 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     }
     canvas.style.cursor = cursor;
 
+    // Handle selection box drawing (check this BEFORE drag/resize check)
+    if (selectionBox && selectionBox.startX !== undefined) {
+      const boxX = Math.min(x, selectionBox.startX);
+      const boxY = Math.min(y, selectionBox.startY);
+      const boxW = Math.abs(x - selectionBox.startX);
+      const boxH = Math.abs(y - selectionBox.startY);
+      setSelectionBox({ x: boxX, y: boxY, w: boxW, h: boxH, startX: selectionBox.startX, startY: selectionBox.startY });
+      return;
+    }
+
     // Logic for Drag/Resize
     if (!dragState.isDragging && !dragState.isResizing) return;
 
@@ -649,18 +851,43 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     const dxMm = dxPx / scale;
     const dyMm = dyPx / scale;
 
-    if (dragState.isDragging && selectedElement) {
+    if (dragState.isDragging && selectedElement && selectedElements.length <= 1) {
+      // Single element drag with snapping
+      const init = dragState.initialEl;
+      const baseX = Math.max(0, roundTo1Decimal((init.x || 0) + dxMm));
+      const baseY = Math.max(0, roundTo1Decimal((init.y || 0) + dyMm));
+      const snapped = getSnappedPosition({ x: baseX, y: baseY }, init);
+      setAlignGuides(snapped.guides);
+
       setElements(prev => prev.map(el => {
         if (el.id === selectedElement) {
           return {
             ...el,
-            x: Math.max(0, roundTo1Decimal((dragState.initialEl.x || 0) + dxMm)),
-            y: Math.max(0, roundTo1Decimal((dragState.initialEl.y || 0) + dyMm))
+            x: Math.max(0, roundTo1Decimal(snapped.x)),
+            y: Math.max(0, roundTo1Decimal(snapped.y))
           };
         }
         return el;
       }));
+    } else if (dragState.isDragging && selectedElements.length > 1) {
+      // Multi-element drag - use stored initial positions
+      setAlignGuides({ vertical: [], horizontal: [] });
+      setElements(prev => prev.map(el => {
+        if (selectedElements.includes(el.id)) {
+          // Use stored initial position from dragState
+          const init = dragState.initialEls[el.id];
+          if (init) {
+            return {
+              ...el,
+              x: Math.max(0, roundTo1Decimal((init.x || 0) + dxMm)),
+              y: Math.max(0, roundTo1Decimal((init.y || 0) + dyMm))
+            };
+          }
+        }
+        return el;
+      }));
     } else if (dragState.isResizing && selectedElement) {
+       setAlignGuides({ vertical: [], horizontal: [] });
        setElements(prev => prev.map(el => {
         if (el.id === selectedElement) {
            const init = dragState.initialEl;
@@ -668,18 +895,24 @@ export default function LabelEditor({ onBack, currentTemplate }) {
            let newY = Math.max(0, init.y || 0);
            let newW = Math.max(1, init.width || 1);
            let newH = Math.max(1, init.height || 1);
+           
+           // For QR code, lock aspect ratio (square)
+           const isQRCode = el.type === 'qrcode';
 
            if (dragState.resizeHandle.includes('e')) {
               newW = Math.max(1, (init.width || 1) + dxMm);
+              if (isQRCode) newH = newW;
            }
            if (dragState.resizeHandle.includes('s')) {
               newH = Math.max(1, (init.height || 1) + dyMm);
+              if (isQRCode) newW = newH;
            }
            if (dragState.resizeHandle.includes('w')) {
               const proposedW = (init.width || 1) - dxMm;
               if (proposedW > 1) {
                   newX = Math.max(0, (init.x || 0) + dxMm);
                   newW = proposedW;
+                  if (isQRCode) newH = newW;
               }
            }
            if (dragState.resizeHandle.includes('n')) {
@@ -687,6 +920,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                if (proposedH > 1) {
                    newY = Math.max(0, (init.y || 0) + dyMm);
                    newH = proposedH;
+                   if (isQRCode) newW = newH;
                }
            }
 
@@ -704,14 +938,42 @@ export default function LabelEditor({ onBack, currentTemplate }) {
   };
 
   const handleMouseUp = () => {
+    // Handle selection box completion
+    if (selectionBox && selectionBox.startX !== undefined && (selectionBox.w > 5 || selectionBox.h > 5)) {
+      const scale = getScale();
+      const selectedIds = elements
+        .filter(el => {
+          const elX = el.x * scale;
+          const elY = el.y * scale;
+          const elW = el.width * scale;
+          const elH = el.height * scale;
+          
+          // Check if element is within selection box
+          return !(elX + elW < selectionBox.x || elX > selectionBox.x + selectionBox.w ||
+                   elY + elH < selectionBox.y || elY > selectionBox.y + selectionBox.h);
+        })
+        .map(el => el.id);
+      
+      setSelectedElements(selectedIds);
+      if (selectedIds.length > 0) {
+        setSelectedElement(selectedIds[0]);
+      }
+      setSelectionBox(null);
+    } else {
+      setSelectionBox(null);
+    }
+
     setDragState({
       isDragging: false,
       isResizing: false,
       resizeHandle: null,
       startX: 0,
       startY: 0,
-      initialEl: null
+      initialEl: null,
+      selectedIds: [],
+      initialEls: {}
     });
+    setAlignGuides({ vertical: [], horizontal: [] });
   };
 
   // Keyboard Shortcuts Handler
@@ -721,51 +983,67 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     // Ctrl+C / Cmd+C - Copy
     if (isMeta && e.key === 'c') {
       e.preventDefault();
-      if (selectedElement) {
-        const el = elements.find(elem => elem.id === selectedElement);
-        if (el) {
-          setClipboard(JSON.parse(JSON.stringify(el)));
-          message.success('已复制');
-        }
-      }
+      const toCopy = selectedElements.length > 0 ? selectedElements : (selectedElement ? [selectedElement] : []);
+      if (toCopy.length === 0) return;
+      
+      const copiedElements = toCopy.map(id => {
+        const el = elements.find(elem => elem.id === id);
+        return el ? JSON.parse(JSON.stringify(el)) : null;
+      }).filter(el => el !== null);
+      
+      setClipboard(copiedElements.length === 1 ? copiedElements[0] : copiedElements);
       return;
     }
 
     // Ctrl+X / Cmd+X - Cut
     if (isMeta && e.key === 'x') {
       e.preventDefault();
-      if (selectedElement) {
-        const el = elements.find(elem => elem.id === selectedElement);
-        if (el) {
-          setClipboard(JSON.parse(JSON.stringify(el)));
-          const newElements = elements.filter(elem => elem.id !== selectedElement);
-          setElements(newElements);
-          setSelectedElement(null);
-          addToHistory(newElements, null);
-          message.success('已剪切');
-        }
-      }
+      const toCut = selectedElements.length > 0 ? selectedElements : (selectedElement ? [selectedElement] : []);
+      if (toCut.length === 0) return;
+      
+      const cutElements = toCut.map(id => {
+        const el = elements.find(elem => elem.id === id);
+        return el ? JSON.parse(JSON.stringify(el)) : null;
+      }).filter(el => el !== null);
+      
+      setClipboard(cutElements.length === 1 ? cutElements[0] : cutElements);
+      const newElements = elements.filter(elem => !toCut.includes(elem.id));
+      setElements(newElements);
+      setSelectedElement(null);
+      setSelectedElements([]);
+      addToHistory(newElements, null);
       return;
     }
 
     // Ctrl+V / Cmd+V - Paste
     if (isMeta && e.key === 'v') {
       e.preventDefault();
-      if (clipboard) {
-        const newElement = {
-          ...JSON.parse(JSON.stringify(clipboard)),
-          id: Date.now(), // Generate new ID to avoid duplication
-          x: clipboard.x + 2, // Slight offset so pasted element is visible
-          y: clipboard.y + 2
-        };
-        const newElements = [...elements, newElement];
-        setElements(newElements);
-        setSelectedElement(newElement.id);
-        addToHistory(newElements, newElement.id);
-        message.success('已粘贴');
-      } else {
-        message.warning('剪贴板为空');
+      if (!clipboard) {
+        message.warning(getTranslation('noClipboardContent'));
+        return;
       }
+      
+      const isArray = Array.isArray(clipboard);
+      const itemsToPaste = isArray ? clipboard : [clipboard];
+      
+      // Generate new IDs and add offset for all pasted elements
+      let offset = 0;
+      const pastedElements = itemsToPaste.map(item => ({
+        ...JSON.parse(JSON.stringify(item)),
+        id: Date.now() + offset++,
+        x: (item.x || 0) + 2,
+        y: (item.y || 0) + 2
+      }));
+      
+      const newElements = [...elements, ...pastedElements];
+      setElements(newElements);
+      
+      // Select all pasted elements
+      const pastedIds = pastedElements.map(el => el.id);
+      setSelectedElements(pastedIds);
+      setSelectedElement(pastedIds[0]);
+      
+      addToHistory(newElements, pastedIds[0]);
       return;
     }
 
@@ -778,7 +1056,6 @@ export default function LabelEditor({ onBack, currentTemplate }) {
         const snapshot = history[newIndex];
         setElements(JSON.parse(JSON.stringify(snapshot.elements)));
         setSelectedElement(snapshot.selectedElement);
-        message.success('已撤销');
       }
       return;
     }
@@ -792,21 +1069,25 @@ export default function LabelEditor({ onBack, currentTemplate }) {
         const snapshot = history[newIndex];
         setElements(JSON.parse(JSON.stringify(snapshot.elements)));
         setSelectedElement(snapshot.selectedElement);
-        message.success('已重做');
       }
       return;
     }
 
-    // Backspace / Delete - Delete selected element
+    // Backspace / Delete - Delete selected element(s)
     if (e.key === 'Backspace' || e.key === 'Delete') {
       e.preventDefault();
-      if (selectedElement) {
-        const newElements = elements.filter(el => el.id !== selectedElement);
-        setElements(newElements);
-        setSelectedElement(null);
-        addToHistory(newElements, null);
-        message.success('已删除');
-      }
+      const toDelete = selectedElements.length > 0 ? selectedElements : (selectedElement ? [selectedElement] : []);
+      if (toDelete.length === 0) return;
+      
+      toDelete.forEach(id => {
+        delete imageCacheRef.current[id];
+      });
+      
+      const newElements = elements.filter(el => !toDelete.includes(el.id));
+      setElements(newElements);
+      setSelectedElement(null);
+      setSelectedElements([]);
+      addToHistory(newElements, null);
       return;
     }
   };
@@ -888,11 +1169,48 @@ export default function LabelEditor({ onBack, currentTemplate }) {
   };
 
   const deleteSelected = () => {
-    if (!selectedElement) return;
-    // Clear image cache for this element
-    delete imageCacheRef.current[selectedElement];
-    setElements(elements.filter(el => el.id !== selectedElement));
+    // Delete selected elements (single or multiple)
+    const toDelete = selectedElements.length > 0 ? selectedElements : (selectedElement ? [selectedElement] : []);
+    if (toDelete.length === 0) return;
+    
+    toDelete.forEach(id => {
+      delete imageCacheRef.current[id];
+    });
+    
+    setElements(elements.filter(el => !toDelete.includes(el.id)));
     setSelectedElement(null);
+    setSelectedElements([]);
+  };
+
+  const cutSelected = () => {
+    // Cut selected elements (single or multiple)
+    const toCut = selectedElements.length > 0 ? selectedElements : (selectedElement ? [selectedElement] : []);
+    if (toCut.length === 0) return;
+    
+    const cutElements = toCut.map(id => {
+      const el = elements.find(elem => elem.id === id);
+      return el ? JSON.parse(JSON.stringify(el)) : null;
+    }).filter(el => el !== null);
+    
+    setClipboard(cutElements.length === 1 ? cutElements[0] : cutElements);
+    const newElements = elements.filter(elem => !toCut.includes(elem.id));
+    setElements(newElements);
+    setSelectedElement(null);
+    setSelectedElements([]);
+    addToHistory(newElements, null);
+  };
+
+  const copySelected = () => {
+    // Copy selected elements to clipboard (same as Ctrl+C)
+    const toCopy = selectedElements.length > 0 ? selectedElements : (selectedElement ? [selectedElement] : []);
+    if (toCopy.length === 0) return;
+    
+    const copiedElements = toCopy.map(id => {
+      const el = elements.find(elem => elem.id === id);
+      return el ? JSON.parse(JSON.stringify(el)) : null;
+    }).filter(el => el !== null);
+    
+    setClipboard(copiedElements.length === 1 ? copiedElements[0] : copiedElements);
   };
 
   const handleImageUpload = (e) => {
@@ -909,7 +1227,6 @@ export default function LabelEditor({ onBack, currentTemplate }) {
           height: 15,
           borderRadius: 0
         });
-        message.success('图片已插入');
       }
     };
     reader.readAsDataURL(file);
@@ -931,7 +1248,6 @@ export default function LabelEditor({ onBack, currentTemplate }) {
         // Clear old image cache
         delete imageCacheRef.current[selectedElement];
         updateSelected({ imageData });
-        message.success('图片已替换');
       }
     };
     reader.readAsDataURL(file);
@@ -949,11 +1265,11 @@ export default function LabelEditor({ onBack, currentTemplate }) {
       {/* 1. Left Icon Bar */}
       <div className="left-icon-bar">
         {[
-          { key: 'templates', icon: <LayoutOutlined />, label: '模板' },
-          { key: 'text', icon: <FontSizeOutlined />, label: '文字' },
-          { key: 'params', icon: <CodeOutlined />, label: '参数' },
-          { key: 'image', icon: <PictureOutlined />, label: '图片' },
-          { key: 'shape', icon: <BorderOutlined />, label: '图形' },
+          { key: 'templates', icon: <LayoutOutlined />, label: getTranslation('templates') },
+          { key: 'text', icon: <FontSizeOutlined />, label: getTranslation('text') },
+          { key: 'params', icon: <CodeOutlined />, label: getTranslation('parameters') },
+          { key: 'image', icon: <PictureOutlined />, label: getTranslation('image') },
+          { key: 'shape', icon: <BorderOutlined />, label: getTranslation('shape') },
         ].map(item => (
           <div 
             key={item.key} 
@@ -974,16 +1290,16 @@ export default function LabelEditor({ onBack, currentTemplate }) {
         <div className="left-drawer">
           {activeSidebarItem === 'params' && (
             <div className="drawer-content">
-              <Button block style={{ marginBottom: 16 }}>自定义打印参数</Button>
-              <Input prefix={<SearchOutlined />} placeholder="搜索" style={{ marginBottom: 16 }} />
+              <Button block style={{ marginBottom: 16 }}>{getTranslation('parameters')}</Button>
+              <Input prefix={<SearchOutlined />} placeholder={getTranslation('search')} style={{ marginBottom: 16 }} />
               <div className="param-list">
                 {PARAM_LIST.map(param => (
                   <div 
                     key={param.key} 
                     className="param-item"
-                    onClick={() => addElement('text', { text: `#{${param.name}}` })}
+                    onClick={() => addElement('text', { text: `#{${param.key}}` })}
                   >
-                    {param.name}
+                    {getTranslation(param.key)}
                   </div>
                 ))}
               </div>
@@ -991,15 +1307,14 @@ export default function LabelEditor({ onBack, currentTemplate }) {
           )}
           {activeSidebarItem === 'templates' && (
             <div className="drawer-content">
-              <Button block onClick={() => setElements([])}>使用空白模板编辑</Button>
               <div style={{ marginTop: 20, textAlign: 'center', color: '#999' }}>
-                暂无更多模板
+                {getTranslation('noMoreTemplates')}
               </div>
             </div>
           )}
            {activeSidebarItem === 'text' && (
             <div className="drawer-content">
-               <Button block onClick={() => addElement('text', { text: '普通文本' })}>添加普通文本</Button>
+               <Button block onClick={() => addElement('text', { text: getTranslation('plainText') })}>{getTranslation('addNormalText')}</Button>
             </div>
           )}
           {activeSidebarItem === 'image' && (
@@ -1014,11 +1329,24 @@ export default function LabelEditor({ onBack, currentTemplate }) {
               <Button 
                 block 
                 onClick={() => document.getElementById('imageUpload').click()}
+                style={{ marginBottom: 12 }}
               >
-                选择图片
+                {getTranslation('selectImage')}
+              </Button>
+              <Button 
+                block 
+                onClick={() => addElement('qrcode', { 
+                  x: 10, 
+                  y: 10, 
+                  width: 10, 
+                  height: 10,
+                  qrcodeContent: 'tea_machine'
+                })}
+              >
+                {getTranslation('addQrCode')}
               </Button>
               <div style={{ marginTop: 20, textAlign: 'center', color: '#999', fontSize: 12 }}>
-                支持 JPG、PNG、GIF 等格式
+                {getTranslation('supportedFormats')}
               </div>
             </div>
           )}
@@ -1126,7 +1454,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
           )}
           {/* Collapse Button */}
           <div className="drawer-collapse" onClick={() => setIsSidebarOpen(false)}>
-            收起 <LeftOutlined style={{ fontSize: 10 }} />
+            {getTranslation('collapse')} <LeftOutlined style={{ fontSize: 10 }} />
           </div>
         </div>
       )}
@@ -1139,12 +1467,40 @@ export default function LabelEditor({ onBack, currentTemplate }) {
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               style={{ width: 200 }}
-              placeholder="模板名称"
+              placeholder={getTranslation('enterTemplateName')}
             />
+            <Button.Group>
+              <Button 
+                icon={<UndoOutlined />} 
+                onClick={() => {
+                  if (historyIndex > 0) {
+                    const newIndex = historyIndex - 1;
+                    setHistoryIndex(newIndex);
+                    const snapshot = history[newIndex];
+                    setElements(JSON.parse(JSON.stringify(snapshot.elements)));
+                    setSelectedElement(snapshot.selectedElement);
+                  }
+                }}
+                disabled={historyIndex <= 0}
+              />
+              <Button 
+                icon={<RedoOutlined />} 
+                onClick={() => {
+                  if (historyIndex < history.length - 1) {
+                    const newIndex = historyIndex + 1;
+                    setHistoryIndex(newIndex);
+                    const snapshot = history[newIndex];
+                    setElements(JSON.parse(JSON.stringify(snapshot.elements)));
+                    setSelectedElement(snapshot.selectedElement);
+                  }
+                }}
+                disabled={historyIndex >= history.length - 1}
+              />
+            </Button.Group>
           </div>
           <div className="header-actions">
-            <Button onClick={onBack}>取消</Button>
-            <Button type="primary" onClick={handleSave}>保存</Button>
+            <Button onClick={onBack}>{getTranslation('cancel')}</Button>
+            <Button type="primary" onClick={handleSave}>{getTranslation('save')}</Button>
           </div>
         </div>
 
@@ -1170,7 +1526,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
             <span className="zoom-text">{zoom}%</span>
             <Button type="text" icon={<ZoomInOutlined />} onClick={() => handleZoom(10)} size="small" />
           </div>
-          <Button type="text" icon={<QuestionCircleOutlined />}>帮助</Button>
+          <Button type="text" icon={<QuestionCircleOutlined />}>{getTranslation('help')}</Button>
         </div>
       </div>
 
@@ -1180,7 +1536,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
           // Element Properties
           <div className="properties-content">
             {/* Common Properties for All Elements */}
-            <div className="prop-section-title">参数</div>
+            <div className="prop-section-title">{getTranslation('parameters')}</div>
             <div className="prop-grid-2">
               <InputNumber 
                 addonBefore="X" 
@@ -1204,7 +1560,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                 step={0.1}
                 precision={1}
                 min={1}
-                onChange={v => updateSelected({ width: v || 1 })} 
+                onChange={v => {
+                  if (currentElement.type === 'qrcode') {
+                    updateSelected({ width: v || 1, height: v || 1 });
+                  } else {
+                    updateSelected({ width: v || 1 });
+                  }
+                }} 
               />
               <InputNumber 
                 addonBefore="H" 
@@ -1212,14 +1574,20 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                 step={0.1}
                 precision={1}
                 min={1}
-                onChange={v => updateSelected({ height: v || 1 })} 
+                onChange={v => {
+                  if (currentElement.type === 'qrcode') {
+                    updateSelected({ width: v || 1, height: v || 1 });
+                  } else {
+                    updateSelected({ height: v || 1 });
+                  }
+                }} 
               />
             </div>
 
             {/* Image Element Properties */}
             {currentElement.type === 'image' && (
               <>
-                <div className="prop-section-title" style={{ marginTop: 20 }}>图片设置</div>
+                <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('imageSettings')}</div>
                 
                 <input 
                   type="file" 
@@ -1234,10 +1602,10 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                   style={{ marginBottom: 12 }}
                   onClick={replaceImage}
                 >
-                  替换图片
+                  {getTranslation('replaceImage')}
                 </Button>
 
-                <div className="prop-section-title" style={{ marginTop: 20 }}>圆角</div>
+                <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('borderRadius')}</div>
                 <InputNumber 
                   addonBefore="px" 
                   value={currentElement.borderRadius || 0}
@@ -1253,10 +1621,10 @@ export default function LabelEditor({ onBack, currentTemplate }) {
             {/* Line Element Properties */}
             {currentElement.type === 'line' && (
               <>
-                <div className="prop-section-title" style={{ marginTop: 20 }}>线条设置</div>
+                <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('lineSettings')}</div>
                 
                 <div className="prop-row">
-                  <span style={{ marginRight: 8 }}>样式:</span>
+                  <span style={{ marginRight: 8 }}>{getTranslation('lineStyle')}:</span>
                   <Select 
                     value={currentElement.lineStyle || 'solid'} 
                     style={{ flex: 1 }}
@@ -1309,7 +1677,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                 </div>
 
                 <div className="prop-row" style={{ marginTop: 12 }}>
-                  <span style={{ marginRight: 8 }}>粗细:</span>
+                  <span style={{ marginRight: 8 }}>{getTranslation('lineWidth')}:</span>
                   <InputNumber 
                     value={currentElement.strokeWidth || 1} 
                     min={0.5}
@@ -1321,7 +1689,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                 </div>
 
                 <div className="prop-row">
-                  <span style={{ marginRight: 8 }}>颜色:</span>
+                  <span style={{ marginRight: 8 }}>{getTranslation('strokeColor')}:</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
                     <ColorPicker 
                       value={currentElement.strokeColor || '#000000'} 
@@ -1338,15 +1706,42 @@ export default function LabelEditor({ onBack, currentTemplate }) {
             )}
 
             {/* Text Element Properties */}
+            {currentElement.type === 'qrcode' && (
+              <>
+                <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('qrCodeSettings')}</div>
+                <div className="prop-row">
+                  <span style={{ marginRight: 8 }}>{getTranslation('content')}:</span>
+                  <Select 
+                    value={currentElement.qrcodeContent || 'tea_machine'} 
+                    style={{ flex: 1 }}
+                    onChange={v => updateSelected({ qrcodeContent: v })}
+                    options={[
+                      { value: 'tea_machine', label: 'Tea Machine' }
+                    ]}
+                  />
+                </div>
+              </>
+            )}
+
             {currentElement.type === 'text' && (
               <>
-                <div className="prop-section-title" style={{ marginTop: 20 }}>属性</div>
+                <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('properties')}</div>
                 <div className="prop-row">
                   <Select 
                     value={currentElement.fontFamily} 
                     style={{ flex: 1 }}
                     onChange={v => updateSelected({ fontFamily: v })}
-                    options={[{ value: 'Arial', label: 'Arial' }, { value: '等线', label: '等线' }]} 
+                    options={[
+                      { value: 'Arial', label: 'Arial' },
+                      { value: 'Helvetica', label: 'Helvetica' },
+                      { value: 'Times New Roman', label: 'Times New Roman' },
+                      { value: 'Courier New', label: 'Courier New' },
+                      { value: 'Verdana', label: 'Verdana' },
+                      { value: 'Georgia', label: 'Georgia' },
+                      { value: 'Comic Sans MS', label: 'Comic Sans MS' },
+                      { value: 'Trebuchet MS', label: 'Trebuchet MS' },
+                      { value: '等线', label: '等线' }
+                    ]} 
                   />
                 </div>
                 <div className="prop-row">
@@ -1425,13 +1820,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                    </Button.Group>
                 </div>
                 
-                <div className="prop-section-title" style={{ marginTop: 20 }}>内容</div>
+                <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('content')}</div>
                 <TextArea 
                   rows={4} 
                   value={currentElement.text}
                   onChange={e => updateSelected({ text: e.target.value })}
                 />
-                <div className="help-text">修改内容仅用于当前排版预览效果...</div>
+                {/* <div className="help-text">修改内容仅用于当前排版预览效果...</div> */}
               </>
             )}
 
@@ -1441,45 +1836,43 @@ export default function LabelEditor({ onBack, currentTemplate }) {
               <Button block icon={<RotateLeftOutlined />} onClick={() => updateSelected({ rotation: (currentElement.rotation - 90 + 360) % 360 })}></Button>
             </div>
 
-             <div className="prop-toolbar-row">
-               <Button block onClick={() => {
-                 const copyData = { ...currentElement };
-                 // Remove imageData to avoid copying large base64 strings
-                 if (copyData.type === 'image') delete copyData.imageData;
-                 addElement(currentElement.type, copyData);
-               }}>复制</Button>
-               <Button block danger onClick={deleteSelected}>删除</Button>
+             <div className="prop-toolbar-row" style={{ display: 'flex', gap: 8 }}>
+               <Button style={{ flex: 1 }} onClick={copySelected}>{getTranslation('copy')}</Button>
+               <Button style={{ flex: 1 }} onClick={cutSelected}>{getTranslation('cut')}</Button>
+            </div>
+            <div className="prop-toolbar-row">
+               <Button block danger onClick={deleteSelected}>{getTranslation('delete')}</Button>
             </div>
           </div>
         ) : (
           // Global Settings
           <div className="properties-content">
-            <div className="prop-section-title">全局</div>
-            <div className="prop-row-spread">模板尺寸</div>
+            <div className="prop-section-title">{getTranslation('global')}</div>
+            <div className="prop-row-spread">{getTranslation('templateSize')}</div>
             <div className="prop-grid-2">
               <InputNumber 
                 value={canvasWidth} 
-                addonBefore="宽"
+                addonBefore={getTranslation('width')}
                 addonAfter="mm"
                 onChange={setCanvasWidth} 
               />
                <InputNumber 
                 value={canvasHeight} 
-                addonBefore="高"
+                addonBefore={getTranslation('height')}
                 addonAfter="mm"
                 onChange={setCanvasHeight} 
               />
             </div>
 
             <div className="prop-row-spread" style={{ marginTop: 20 }}>
-              <span>打印设置</span>
-              <a href="#">查看示例</a>
+              <span>{getTranslation('printSettings')}</span>
+              <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>{getTranslation('viewExample')}</a>
             </div>
-             <div className="prop-grid-2">
-              <InputNumber addonBefore="列数" defaultValue={1} />
-              <InputNumber addonBefore="列距" defaultValue={0} />
-              <InputNumber addonBefore="上边距" defaultValue={0} />
-              <InputNumber addonBefore="左边距" defaultValue={0} />
+            <div className="prop-grid-2">
+              <InputNumber addonBefore={getTranslation('columns')} defaultValue={1} />
+              <InputNumber addonBefore={getTranslation('columnSpacing')} defaultValue={0} />
+              <InputNumber addonBefore={getTranslation('topMargin')} defaultValue={0} />
+              <InputNumber addonBefore={getTranslation('leftMargin')} defaultValue={0} />
             </div>
           </div>
         )}

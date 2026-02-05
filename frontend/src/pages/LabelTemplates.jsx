@@ -3,9 +3,11 @@ import { Button, message, Space } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import { labelAPI } from '../services/api';
 import { POS_BUSINESS_ID } from '../config/constants';
+import { useLanguage } from '../locales/LanguageContext';
 import './LabelTemplates.css';
 
 export default function LabelTemplates({ onEditTemplate }) {
+  const { getTranslation } = useLanguage();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,21 +29,21 @@ export default function LabelTemplates({ onEditTemplate }) {
           name: '奶茶标签',
           width: 40,
           height: 30,
-          is_active: true
+          isActive: true
         },
         {
           id: '2',
           name: '订单标签',
           width: 40,
           height: 60,
-          is_active: false
+          isActive: false
         },
         {
           id: '3',
           name: '大标签',
           width: 60,
           height: 80,
-          is_active: false
+          isActive: false
         }
       ]);
     } finally {
@@ -54,7 +56,7 @@ export default function LabelTemplates({ onEditTemplate }) {
     if (onEditTemplate) {
       onEditTemplate({
         id: null,
-        name: '新建模板',
+        name: 'New Template',
         width: 40,
         height: 30,
         is_active: false,
@@ -73,40 +75,18 @@ export default function LabelTemplates({ onEditTemplate }) {
   const handleDelete = async (id) => {
     try {
       await labelAPI.deleteTemplate(id);
-      message.success('删除成功');
       loadTemplates();
     } catch (error) {
-      message.error('删除失败');
+      message.error(getTranslation('deleteFailed'));
     }
   };
 
   const handleSetActive = async (id) => {
     try {
-      await labelAPI.updateTemplate(id, { is_active: true });
-      message.success('已设为使用');
+      await labelAPI.activateTemplate(id, POS_BUSINESS_ID);
       loadTemplates();
     } catch (error) {
-      message.error('操作失败');
-    }
-  };
-
-  const handleDuplicate = async (template) => {
-    try {
-      const newTemplate = {
-        businessId: POS_BUSINESS_ID,
-        name: `${template.name} (副本)`,
-        width: template.width,
-        height: template.height,
-        templateConfig: template.template_config
-      };
-      const response = await labelAPI.createTemplate(newTemplate);
-      message.success('复制成功');
-      // Open the new template in editor
-      if (onEditTemplate) {
-        onEditTemplate(response.data.data);
-      }
-    } catch (error) {
-      message.error('复制失败');
+      message.error(getTranslation('operationFailed'));
     }
   };
 
@@ -121,34 +101,33 @@ export default function LabelTemplates({ onEditTemplate }) {
           width: values.width,
           height: values.height
         });
-        message.success('更新成功');
         setModalVisible(false);
         loadTemplates();
       }
     } catch (error) {
-      message.error('操作失败');
+      message.error(getTranslation('operationFailed'));
     }
   };
 
   return (
     <div className="label-templates-container">
       <div className="templates-header">
-        <h1>标签模板</h1>
+        <h1>{getTranslation('labelTemplates')}</h1>
         <Button 
           type="primary" 
           icon={<PlusOutlined />}
           onClick={handleAddNew}
           size="large"
         >
-          新增模板
+          {getTranslation('addTemplate')}
         </Button>
       </div>
 
       <div className="templates-grid">
         {templates.map(template => (
           <div key={template.id} className="template-card">
-            {template.is_active && (
-              <div className="template-badge">使用中</div>
+            {template.isActive && (
+              <div className="template-badge">{getTranslation('inUse')}</div>
             )}
             
             <div className="template-content">
@@ -165,15 +144,15 @@ export default function LabelTemplates({ onEditTemplate }) {
                   size="small"
                   icon={<EditOutlined />}
                   onClick={() => handleEdit(template)}
-                  title="编辑"
+                  title={getTranslation('edit')}
                 />
                 <Button 
                   type="text"
                   size="small"
                   icon={<CheckOutlined />}
                   onClick={() => handleSetActive(template.id)}
-                  disabled={template.is_active}
-                  title="设为使用"
+                  disabled={template.isActive}
+                  title={getTranslation('setAsActive')}
                 />
                 <Button 
                   type="text"
@@ -181,7 +160,7 @@ export default function LabelTemplates({ onEditTemplate }) {
                   size="small"
                   icon={<DeleteOutlined />}
                   onClick={() => handleDelete(template.id)}
-                  title="删除"
+                  title={getTranslation('delete')}
                 />
               </Space>
             </div>

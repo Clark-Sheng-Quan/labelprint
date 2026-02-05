@@ -9,7 +9,7 @@
 
 /* Left Icon Bar */
 .left-icon-bar {
-  width: 50px;
+  width: 80px;
   background-color: #fff;
   border-right: 1px solid #e0e0e0;
   display: flex;
@@ -29,8 +29,12 @@
   justify-content: center;
   cursor: pointer;
   color: #666;
-  font-size: 12px;
+  font-size: 11px;
   transition: all 0.2s;
+  padding: 4px 6px;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.3;
 }
 
 .icon-bar-item:hover, .icon-bar-item.active {
@@ -273,7 +277,7 @@
 
 .prop-grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-bottom: 12px;
 }

@@ -11,9 +11,11 @@ const client = axios.create({
 
 export const labelAPI = {
   getTemplates: (businessId) => client.get(`/label/templates/${businessId}`),
+  getActiveTemplate: (businessId) => client.get(`/label/templates/${businessId}/active`),
   getTemplate: (id) => client.get(`/label/template/${id}`),
   createTemplate: (data) => client.post('/label/template', data),
   updateTemplate: (id, data) => client.put(`/label/template/${id}`, data),
+  activateTemplate: (id, businessId) => client.put(`/label/template/${id}/activate`, { businessId }),
   deleteTemplate: (id) => client.delete(`/label/template/${id}`)
 };
 
