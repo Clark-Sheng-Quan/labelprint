@@ -25,6 +25,42 @@ router.get('/templates/:businessId', async (req, res) => {
   }
 });
 
+// Sync API - Get active template for POS system
+// Used by POS settings to fetch the current active label template
+router.post('/sync', async (req, res) => {
+  try {
+    const { businessId } = req.body;
+    
+    if (!businessId) {
+      return res.status(400).json({
+        success: false,
+        error: 'businessId is required'
+      });
+    }
+
+    const template = await LabelTemplate.findActiveByBusinessId(businessId);
+    
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        error: 'No active template found for this business'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: template,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error syncing template:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Get current active template for business
 router.get('/templates/:businessId/active', async (req, res) => {
   try {

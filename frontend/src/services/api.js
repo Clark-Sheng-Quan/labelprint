@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { POS_TOKEN } from '../config/constants';
 
-const API_BASE_URL = ''
+const API_BASE_URL = '';
 
 const client = axios.create({
   baseURL: API_BASE_URL,

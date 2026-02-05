@@ -38,11 +38,45 @@ docker-compose logs -f frontend
 
 | 方法 | 路由 | 说明 |
 |------|------|------|
+| POST | `/label/sync` | **同步 API** - POS 设置请求此端点获取 active template（需要 businessId） |
 | GET | `/label/templates/:businessId` | 获取所有模板 |
+| GET | `/label/templates/:businessId/active` | 获取当前 active 的模板 |
 | GET | `/label/template/:id` | 获取单个模板 |
 | POST | `/label/template` | 创建模板 |
 | PUT | `/label/template/:id` | 更新模板 |
+| PUT | `/label/template/:id/activate` | 设置模板为 active |
 | DELETE | `/label/template/:id` | 删除模板 |
+
+### 同步 API 使用示例
+
+```bash
+curl -X POST http://localhost:3002/label/sync \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "businessId": "67295c445242136caa4511d4"
+  }'
+```
+
+响应示例：
+```json
+{
+  "success": true,
+  "data": {
+    "id": "template-id",
+    "businessId": "67295c445242136caa4511d4",
+    "name": "店铺标签",
+    "width": 60,
+    "height": 40,
+    "templateConfig": {
+      "elements": [...]
+    },
+    "isActive": true,
+    "createdAt": "2026-02-05T10:30:00Z",
+    "updatedAt": "2026-02-05T10:30:00Z"
+  },
+  "timestamp": "2026-02-05T10:35:22.123Z"
+}
 
 ## 集成到主网站
 

@@ -22,30 +22,7 @@ export default function LabelTemplates({ onEditTemplate }) {
       setTemplates(response.data.data || []);
     } catch (error) {
       console.error(error);
-      // Demo data
-      setTemplates([
-        {
-          id: '1',
-          name: '奶茶标签',
-          width: 40,
-          height: 30,
-          isActive: true
-        },
-        {
-          id: '2',
-          name: '订单标签',
-          width: 40,
-          height: 60,
-          isActive: false
-        },
-        {
-          id: '3',
-          name: '大标签',
-          width: 60,
-          height: 80,
-          isActive: false
-        }
-      ]);
+      
     } finally {
       setLoading(false);
     }
