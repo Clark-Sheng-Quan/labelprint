@@ -16,13 +16,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      NODE_ENV: development
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: label_printer
-      DB_USER: postgres
-      DB_PASSWORD: postgres123
+    env_file:
+      - ./.env
     ports:
       - "3002:3002"
     depends_on:

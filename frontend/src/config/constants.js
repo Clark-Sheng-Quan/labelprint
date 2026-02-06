@@ -1,2 +1,2 @@
 export const POS_BUSINESS_ID = localStorage.getItem('businessId') || '67295c445242136caa4511d4'
-export const POS_TOKEN = localStorage.getItem('posToken') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjVmN2JiOTE5NmVhMjA3MjJkOWQxMWI5IiwiZW1haWwiOiJsb3VoYW93ZWlAZ21haWwuY29tIiwicGhvbmUiOiIwNDAwMDAwMDAxIiwiZXhwIjoxNzY5MTQ2MzMxfQ.yAb8KemT9h7sjJZAlYg03fntKLkAdSQ65MUsNAotD0I"
+export const POS_TOKEN = localStorage.getItem('posToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjVmN2JiOTE5NmVhMjA3MjJkOWQxMWI5IiwiZW1haWwiOiJsb3VoYW93ZWlAZ21haWwuY29tIiwicGhvbmUiOiIwNDAwMDAwMDAxIiwiZXhwIjoxNzc4MTEyMTk5fQ.MMK6x3tAHLNbxsm4-BxSHtlkkRmiGEQ4XZu862tKKU0'
