@@ -55,12 +55,17 @@ export default function LabelEditor({ onBack, currentTemplate }) {
   const { getTranslation } = useLanguage();
   const canvasRef = useRef(null);
   const imageCacheRef = useRef({}); // Cache for loaded images
+  const contentInputRef = useRef(null);
   const [elements, setElements] = useState([]);
   const [selectedElement, setSelectedElement] = useState(null);
   const [templateName, setTemplateName] = useState('');
   const [templateId, setTemplateId] = useState(null);
-  const [canvasWidth, setCanvasWidth] = useState(60);
+  const [canvasWidth, setCanvasWidth] = useState(30);
   const [canvasHeight, setCanvasHeight] = useState(40);
+  const [topMargin, setTopMargin] = useState(0);
+  const [rightMargin, setRightMargin] = useState(0);
+  const [bottomMargin, setBottomMargin] = useState(0);
+  const [leftMargin, setLeftMargin] = useState(0);
   const [zoom, setZoom] = useState(200); // Initial zoom 200%
   const [activeSidebarItem, setActiveSidebarItem] = useState('params');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -70,7 +75,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     if (currentTemplate) {
       setTemplateId(currentTemplate.id);
       setTemplateName(currentTemplate.name || getTranslation('untitled'));
-      setCanvasWidth(currentTemplate.width || 60);
+      setCanvasWidth(currentTemplate.width || 30);
       setCanvasHeight(currentTemplate.height || 40);
       setElements(currentTemplate.templateConfig?.elements || []);
     } else {
@@ -120,6 +125,24 @@ export default function LabelEditor({ onBack, currentTemplate }) {
 
   const roundTo1Decimal = (num) => Math.round(num * 10) / 10;
   const SNAP_THRESHOLD = 1; // mm
+
+  // Constrain element to canvas bounds (including margins)
+  const constrainElement = (el) => {
+    const constrained = { ...el };
+    
+    // Left and top bounds (considering margins)
+    if (constrained.x < leftMargin) constrained.x = leftMargin;
+    if (constrained.y < topMargin) constrained.y = topMargin;
+    
+    // Right and bottom bounds (considering margins)
+    const maxX = canvasWidth - rightMargin - constrained.width;
+    const maxY = canvasHeight - bottomMargin - constrained.height;
+    
+    if (constrained.x > maxX) constrained.x = maxX;
+    if (constrained.y > maxY) constrained.y = maxY;
+    
+    return constrained;
+  };
 
   const getSnappedPosition = (proposed, currentEl) => {
     let snappedX = proposed.x;
@@ -343,9 +366,8 @@ export default function LabelEditor({ onBack, currentTemplate }) {
              ctx.textAlign = 'left';
              ctx.fillText(line, lineX, lineY);
            } else if (el.textAlign === 'justify') {
-             // Justify: distribute space between words. 
-             // Last line acts like left align usually.
-             if (index < lines.length - 1 && line.includes(' ')) {
+             // Justify: distribute space between words
+             if (line.includes(' ')) {
                 type = 'justify';
              } else {
                 ctx.textAlign = 'left';
@@ -605,6 +627,25 @@ export default function LabelEditor({ onBack, currentTemplate }) {
       ctx.restore();
     }
 
+    // Draw margin boundaries
+    if (topMargin > 0 || rightMargin > 0 || bottomMargin > 0 || leftMargin > 0) {
+      ctx.save();
+      ctx.strokeStyle = '#d3d3d3';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      
+      const marginLeft = leftMargin * scale;
+      const marginTop = topMargin * scale;
+      const marginRight = rightMargin * scale;
+      const marginBottom = bottomMargin * scale;
+      
+      const marginWidth = pxWidth - marginLeft - marginRight;
+      const marginHeight = pxHeight - marginTop - marginBottom;
+      
+      ctx.strokeRect(marginLeft, marginTop, marginWidth, marginHeight);
+      ctx.restore();
+    }
+
     if (alignGuides.vertical.length || alignGuides.horizontal.length) {
       ctx.save();
       ctx.strokeStyle = '#ff4d4f';
@@ -633,7 +674,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
 
   useEffect(() => {
     drawCanvas();
-  }, [elements, selectedElement, selectedElements, canvasWidth, canvasHeight, zoom, alignGuides, selectionBox]);
+  }, [elements, selectedElement, selectedElements, canvasWidth, canvasHeight, zoom, alignGuides, selectionBox, topMargin, rightMargin, bottomMargin, leftMargin]);
 
 
   // Interaction Handlers
@@ -854,18 +895,20 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     if (dragState.isDragging && selectedElement && selectedElements.length <= 1) {
       // Single element drag with snapping
       const init = dragState.initialEl;
-      const baseX = Math.max(0, roundTo1Decimal((init.x || 0) + dxMm));
-      const baseY = Math.max(0, roundTo1Decimal((init.y || 0) + dyMm));
+      const baseX = roundTo1Decimal((init.x || 0) + dxMm);
+      const baseY = roundTo1Decimal((init.y || 0) + dyMm);
       const snapped = getSnappedPosition({ x: baseX, y: baseY }, init);
       setAlignGuides(snapped.guides);
 
       setElements(prev => prev.map(el => {
         if (el.id === selectedElement) {
-          return {
+          const updated = {
             ...el,
-            x: Math.max(0, roundTo1Decimal(snapped.x)),
-            y: Math.max(0, roundTo1Decimal(snapped.y))
+            x: roundTo1Decimal(snapped.x),
+            y: roundTo1Decimal(snapped.y)
           };
+          const constrained = constrainElement(updated);
+          return constrained;
         }
         return el;
       }));
@@ -877,11 +920,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
           // Use stored initial position from dragState
           const init = dragState.initialEls[el.id];
           if (init) {
-            return {
+            const updated = {
               ...el,
-              x: Math.max(0, roundTo1Decimal((init.x || 0) + dxMm)),
-              y: Math.max(0, roundTo1Decimal((init.y || 0) + dyMm))
+              x: roundTo1Decimal((init.x || 0) + dxMm),
+              y: roundTo1Decimal((init.y || 0) + dyMm)
             };
+            const constrained = constrainElement(updated);
+            return constrained;
           }
         }
         return el;
@@ -891,8 +936,8 @@ export default function LabelEditor({ onBack, currentTemplate }) {
        setElements(prev => prev.map(el => {
         if (el.id === selectedElement) {
            const init = dragState.initialEl;
-           let newX = Math.max(0, init.x || 0);
-           let newY = Math.max(0, init.y || 0);
+           let newX = init.x || 0;
+           let newY = init.y || 0;
            let newW = Math.max(1, init.width || 1);
            let newH = Math.max(1, init.height || 1);
            
@@ -902,27 +947,49 @@ export default function LabelEditor({ onBack, currentTemplate }) {
            if (dragState.resizeHandle.includes('e')) {
               newW = Math.max(1, (init.width || 1) + dxMm);
               if (isQRCode) newH = newW;
+              // Constrain to right boundary (considering right margin)
+              const maxWidth = canvasWidth - rightMargin - newX;
+              if (newW > maxWidth) {
+                newW = maxWidth;
+                if (isQRCode) newH = newW;
+              }
            }
            if (dragState.resizeHandle.includes('s')) {
               newH = Math.max(1, (init.height || 1) + dyMm);
               if (isQRCode) newW = newH;
+              // Constrain to bottom boundary (considering bottom margin)
+              const maxHeight = canvasHeight - bottomMargin - newY;
+              if (newH > maxHeight) {
+                newH = maxHeight;
+                if (isQRCode) newW = newH;
+              }
            }
            if (dragState.resizeHandle.includes('w')) {
               const proposedW = (init.width || 1) - dxMm;
               if (proposedW > 1) {
-                  newX = Math.max(0, (init.x || 0) + dxMm);
-                  newW = proposedW;
+                  let proposedX = (init.x || 0) + dxMm;
+                  if (proposedX < leftMargin) proposedX = leftMargin;
+                  newX = proposedX;
+                  newW = (init.x || 0) + (init.width || 1) - proposedX;
                   if (isQRCode) newH = newW;
               }
            }
            if (dragState.resizeHandle.includes('n')) {
                const proposedH = (init.height || 1) - dyMm;
                if (proposedH > 1) {
-                   newY = Math.max(0, (init.y || 0) + dyMm);
-                   newH = proposedH;
+                   let proposedY = (init.y || 0) + dyMm;
+                   if (proposedY < topMargin) proposedY = topMargin;
+                   newY = proposedY;
+                   newH = (init.y || 0) + (init.height || 1) - proposedY;
                    if (isQRCode) newW = newH;
                }
            }
+
+           // Final boundary constraints (including margins)
+           if (newX < leftMargin) newX = leftMargin;
+           if (newY < topMargin) newY = topMargin;
+           if (newX + newW > canvasWidth - rightMargin) newW = canvasWidth - rightMargin - newX;
+           if (newY + newH > canvasHeight - bottomMargin) newH = canvasHeight - bottomMargin - newY;
 
            return { 
              ...el, 
@@ -1129,6 +1196,18 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     setElements(newElements);
     setSelectedElement(newElement.id);
     addToHistory(newElements, newElement.id);
+    
+    // Auto-focus content input for text elements
+    if (type === 'text') {
+      setTimeout(() => {
+        if (contentInputRef.current) {
+          const textarea = contentInputRef.current.resizableTextArea?.textArea || contentInputRef.current;
+          textarea?.focus();
+          const len = textarea?.value?.length || 0;
+          textarea?.setSelectionRange(len, len); // Move cursor to end
+        }
+      }, 50);
+    }
   };
 
   const updateSelected = (updates) => {
@@ -1144,7 +1223,8 @@ export default function LabelEditor({ onBack, currentTemplate }) {
              roundedUpdates[key] = value;
            }
         }
-        return { ...el, ...roundedUpdates };
+        const updated = { ...el, ...roundedUpdates };
+        return constrainElement(updated);
       }
       return el;
     }));
@@ -1217,6 +1297,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      message.error(getTranslation('imageSizeLimitExceeded') || 'Image size cannot exceed 10MB');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const imageData = event.target?.result;
@@ -1240,6 +1327,13 @@ export default function LabelEditor({ onBack, currentTemplate }) {
   const handleImageReplace = (e) => {
     const file = e.target.files?.[0];
     if (!file || !selectedElement) return;
+
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      message.error(getTranslation('imageSizeLimitExceeded') || 'Image size cannot exceed 10MB');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -1834,6 +1928,7 @@ export default function LabelEditor({ onBack, currentTemplate }) {
                 
                 <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('content')}</div>
                 <TextArea 
+                  ref={contentInputRef}
                   rows={4} 
                   value={currentElement.text}
                   onChange={e => updateSelected({ text: e.target.value })}
@@ -1877,14 +1972,37 @@ export default function LabelEditor({ onBack, currentTemplate }) {
             </div>
 
             <div className="prop-row-spread" style={{ marginTop: 20 }}>
-              <span>{getTranslation('printSettings')}</span>
-              <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>{getTranslation('viewExample')}</a>
+              {getTranslation('margins')}
             </div>
             <div className="prop-grid-2">
-              <InputNumber addonBefore={getTranslation('columns')} defaultValue={1} />
-              <InputNumber addonBefore={getTranslation('columnSpacing')} defaultValue={0} />
-              <InputNumber addonBefore={getTranslation('topMargin')} defaultValue={0} />
-              <InputNumber addonBefore={getTranslation('leftMargin')} defaultValue={0} />
+              <InputNumber 
+                value={topMargin} 
+                addonBefore="Top"
+                addonAfter="mm"
+                onChange={setTopMargin}
+                min={0}
+              />
+              <InputNumber 
+                value={bottomMargin} 
+                addonBefore="Bottom"
+                addonAfter="mm"
+                onChange={setBottomMargin}
+                min={0}
+              />
+              <InputNumber 
+                value={leftMargin} 
+                addonBefore="Left"
+                addonAfter="mm"
+                onChange={setLeftMargin}
+                min={0}
+              />
+              <InputNumber 
+                value={rightMargin} 
+                addonBefore="Right"
+                addonAfter="mm"
+                onChange={setRightMargin}
+                min={0}
+              />
             </div>
           </div>
         )}

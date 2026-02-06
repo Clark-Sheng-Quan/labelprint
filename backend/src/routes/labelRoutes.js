@@ -61,30 +61,6 @@ router.post('/sync', async (req, res) => {
   }
 });
 
-// Get current active template for business
-router.get('/templates/:businessId/active', async (req, res) => {
-  try {
-    const { businessId } = req.params;
-    const template = await LabelTemplate.findActiveByBusinessId(businessId);
-    if (!template) {
-      return res.status(404).json({
-        success: false,
-        error: 'No active template found for this business'
-      });
-    }
-    res.json({
-      success: true,
-      data: template
-    });
-  } catch (error) {
-    console.error('Error fetching active template:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
 // Get single template
 router.get('/template/:id', async (req, res) => {
   try {

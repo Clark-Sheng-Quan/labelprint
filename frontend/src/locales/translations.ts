@@ -117,14 +117,15 @@ export const translations = {
     plainText: 'Plain Text',
     search: 'Search',
     enterTemplateName: 'Enter template name',
-    columns: 'Columns',
-    columnSpacing: 'Column Spacing',
+    margins: 'Margins',
     topMargin: 'Top Margin',
+    rightMargin: 'Right Margin',
     leftMargin: 'Left Margin',
+    bottomMargin: 'Bottom Margin',
     printSettings: 'Print Settings',
     help: 'Help',
     viewExample: 'View Example',
-    supportedFormats: 'Support JPG, PNG, GIF and other formats',
+    supportedFormats: 'Support JPG, PNG, GIF and other formats (Max 10MB)',
     useBlankTemplate: 'Use blank template for editing',
     noMoreTemplates: 'No more templates',
     qrCodeSettings: 'QR Code Settings',
@@ -133,6 +134,7 @@ export const translations = {
     // Errors
     enterTemplateNameError: 'Please enter template name',
     saveFailed: 'Save failed',
+    imageSizeLimitExceeded: 'Image size cannot exceed 10MB',
   },
   
   'zh': {
@@ -252,14 +254,15 @@ export const translations = {
     plainText: '普通文本',
     search: '搜索',
     enterTemplateName: '模板名称',
-    columns: '列数',
-    columnSpacing: '列距',
+    margins: '边距',
     topMargin: '上边距',
+    rightMargin: '右边距',
     leftMargin: '左边距',
+    bottomMargin: '下边距',
     printSettings: '打印设置',
     help: '帮助',
     viewExample: '查看示例',
-    supportedFormats: '支持 JPG、PNG、GIF 等格式',
+    supportedFormats: '支持 JPG、PNG、GIF 等格式（最大 10MB）',
     useBlankTemplate: '使用空白模板编辑',
     noMoreTemplates: '暂无更多模板',
     qrCodeSettings: '二维码设置',
@@ -268,6 +271,7 @@ export const translations = {
     // Errors
     enterTemplateNameError: '请输入模板名称',
     saveFailed: '保存失败',
+    imageSizeLimitExceeded: '图片大小不能超过 10MB',
   }
 } as const;
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, message, Space } from 'antd';
+import { Button, message, Space, Tooltip } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import { labelAPI } from '../services/api';
 import { POS_BUSINESS_ID } from '../config/constants';
@@ -34,8 +34,8 @@ export default function LabelTemplates({ onEditTemplate }) {
       onEditTemplate({
         id: null,
         name: 'New Template',
-        width: 40,
-        height: 30,
+        width: 30,
+        height: 40,
         is_active: false,
         templateConfig: { elements: [] }
       });
@@ -116,29 +116,32 @@ export default function LabelTemplates({ onEditTemplate }) {
 
             <div className="template-actions">
               <Space size="small">
-                <Button 
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(template)}
-                  title={getTranslation('edit')}
-                />
-                <Button 
-                  type="text"
-                  size="small"
-                  icon={<CheckOutlined />}
-                  onClick={() => handleSetActive(template.id)}
-                  disabled={template.isActive}
-                  title={getTranslation('setAsActive')}
-                />
-                <Button 
-                  type="text"
-                  danger
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(template.id)}
-                  title={getTranslation('delete')}
-                />
+                <Tooltip title={getTranslation('setAsActive')}>
+                  <Button 
+                    type="text"
+                    size="small"
+                    icon={<CheckOutlined />}
+                    onClick={() => handleSetActive(template.id)}
+                    disabled={template.isActive}
+                  />
+                </Tooltip>
+                <Tooltip title={getTranslation('edit')}>
+                  <Button 
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEdit(template)}
+                  />
+                </Tooltip>
+                <Tooltip title={getTranslation('delete')}>
+                  <Button 
+                    type="text"
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDelete(template.id)}
+                  />
+                </Tooltip>
               </Space>
             </div>
           </div>

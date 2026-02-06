@@ -13,7 +13,7 @@ export class LabelTemplate {
         template_config JSONB NOT NULL DEFAULT '{"elements":[]}',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        is_active BOOLEAN DEFAULT true
+        is_active BOOLEAN DEFAULT false
       );
 
       CREATE INDEX IF NOT EXISTS idx_label_templates_business_id 
