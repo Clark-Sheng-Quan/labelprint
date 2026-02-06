@@ -7,5 +7,5 @@ export const POS_WEB_CONFIG = {
   token: localStorage.getItem('posToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjVmN2JiOTE5NmVhMjA3MjJkOWQxMWI5IiwiZW1haWwiOiJsb3VoYW93ZWlAZ21haWwuY29tIiwicGhvbmUiOiIwNDAwMDAwMDAxIiwiZXhwIjoxNzc4MTEyMTk5fQ.MMK6x3tAHLNbxsm4-BxSHtlkkRmiGEQ4XZu862tKKU0',
   
   // API base URL
-  apiBase: '/label'
+  apiBase: 'http://localhost:3002/label'
 };

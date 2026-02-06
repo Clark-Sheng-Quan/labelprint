@@ -97,12 +97,17 @@ router.post('/template', async (req, res) => {
       });
     }
 
+    // Check if this is the first template for this business
+    const existingTemplates = await LabelTemplate.findByBusinessId(businessId);
+    const isFirstTemplate = !existingTemplates || existingTemplates.length === 0;
+
     const template = await LabelTemplate.create(
       businessId,
       name,
       width || 60,
       height || 40,
-      templateConfig || { elements: [] }
+      templateConfig || { elements: [] },
+      isFirstTemplate // Auto-activate first template
     );
 
     res.json({

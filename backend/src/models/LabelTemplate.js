@@ -32,14 +32,14 @@ export class LabelTemplate {
     }
   }
 
-  static async create(businessId, name, width, height, templateConfig) {
+  static async create(businessId, name, width, height, templateConfig, isActive = false) {
     const id = uuidv4();
     try {
       const result = await db.one(
-        `INSERT INTO label_templates (id, business_id, name, width, height, template_config)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO label_templates (id, business_id, name, width, height, template_config, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, business_id, name, width, height, template_config, created_at, updated_at, is_active`,
-        [id, businessId, name, width || 60, height || 40, JSON.stringify(templateConfig || { elements: [] })]
+        [id, businessId, name, width || 60, height || 40, JSON.stringify(templateConfig || { elements: [] }), isActive]
       );
       return this._formatTemplate(result);
     } catch (error) {
