@@ -11,7 +11,7 @@ import labelRoutes from './routes/labelRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,8 +24,9 @@ function setupCORS() {
       const allowedOrigins = [
         'https://www.vend88.com.au',
         'https://dev.vend88.com',
-        'http://localhost:3001',
-        'http://localhost:3003'
+        'http://localhost:3081',    // Local frontend dev
+        'http://localhost:3080',    // Local backend access
+        'https://54.90.180.79'      // Production server
       ];
 
       if (NODE_ENV === 'development') {
