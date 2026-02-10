@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button, Input, InputNumber, Select, message, Radio, Divider, Tooltip, ColorPicker } from 'antd';
 import { labelAPI } from '../services/api';
-import { POS_BUSINESS_ID } from '../config/constants';
 import { useLanguage } from '../locales/LanguageContext';
 import {
   SaveOutlined,
@@ -51,7 +50,8 @@ const PARAM_LIST = [
   { name: 'Pick Method', key: 'pickMethod' },
 ];
 
-export default function LabelEditor({ onBack, currentTemplate }) {
+export default function LabelEditor({ onBack, currentTemplate, businessId = null }) {
+  const POS_BUSINESS_ID = businessId || localStorage.getItem('posBusinessId') || null;
   const { getTranslation } = useLanguage();
   const canvasRef = useRef(null);
   const imageCacheRef = useRef({}); // Cache for loaded images

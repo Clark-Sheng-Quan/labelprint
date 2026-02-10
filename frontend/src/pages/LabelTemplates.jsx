@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Button, message, Space, Tooltip } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import { labelAPI } from '../services/api';
-import { POS_BUSINESS_ID } from '../config/constants';
 import { useLanguage } from '../locales/LanguageContext';
 import './LabelTemplates.css';
 
-export default function LabelTemplates({ onEditTemplate }) {
+export default function LabelTemplates({ onEditTemplate, businessId = null }) {
   const { getTranslation } = useLanguage();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const POS_BUSINESS_ID = businessId || localStorage.getItem('posBusinessId') || null;
 
   useEffect(() => {
     loadTemplates();

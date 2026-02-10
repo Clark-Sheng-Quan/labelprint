@@ -4,9 +4,6 @@ import { verifyTokenMiddleware } from '../services/tokenService.js';
 
 const router = express.Router();
 
-// Apply token verification middleware to all routes
-router.use(verifyTokenMiddleware());
-
 // Get all templates for business
 router.get('/templates/:businessId', async (req, res) => {
   try {
@@ -25,9 +22,9 @@ router.get('/templates/:businessId', async (req, res) => {
   }
 });
 
-// Sync API - Get active template for POS system
+// Sync API - Get active template for POS system (requires token verification)
 // Used by POS settings to fetch the current active label template
-router.post('/sync', async (req, res) => {
+router.post('/sync', verifyTokenMiddleware(), async (req, res) => {
   try {
     const { businessId } = req.body;
     

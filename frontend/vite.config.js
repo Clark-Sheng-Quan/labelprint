@@ -9,12 +9,6 @@ export default defineConfig({
     watch: {
       usePolling: true,
       interval: 1000
-    },
-    proxy: {
-      '/label': {
-        target: 'http://localhost:3002',
-        changeOrigin: true
-      }
     }
   }
 })
