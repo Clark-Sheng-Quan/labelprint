@@ -8,10 +8,7 @@ export default defineConfig({
     proxy: {
       '/label': {
         target: 'http://54.90.180.79',
-        changeOrigin: true,
-        headers: {
-          'Origin': 'http://54.90.180.79'
-        }
+        changeOrigin: true
       }
     }
   }

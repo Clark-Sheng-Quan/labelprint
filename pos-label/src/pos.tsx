@@ -21,7 +21,7 @@ export default function POSPrintPreview() {
       setLoading(true);
       const data = await fetchActiveTemplate(POS_WEB_CONFIG.businessId);
       setTemplate(data);
-      message.success('Template loaded successfully');
+      
     } catch (error) {
       message.error('Failed to load template');
     } finally {
