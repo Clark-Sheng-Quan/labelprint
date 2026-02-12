@@ -1,105 +1,120 @@
-# 标签编辑器 - Label Printer Editor
+# LabelMaster - Professional POS Label Printer System
 
-基于 POS 标签打印机的 Web 编辑器，类似 PosPal 的标签管理系统。
+A robust, full-stack solution for designing, managing, and synchronizing POS label templates. This system provides a visual editor for label design and a seamless synchronization API for POS terminals.
 
-## 快速开始
+## 🏗 System Architecture
 
-### 开发环境
+The system consists of three main components:
 
-```bash
-# 后端（backend 目录）
-npm install
-npm run dev
+1.  **Frontend Editor (S3)**: A React-based web application for designing templates. Deployed on AWS S3.
+2.  **Backend API (EC2/Docker)**: A Node.js Express server handling template storage and synchronization. Deployed on AWS EC2 via Docker.
+3.  **POS Integration (Client)**: A lightweight integration layer for POS systems to fetch and render active templates locally.
 
-# 前端（frontend 目录）
-npm install
-npm run dev
+```text
+[ Designing ]               [ Storage ]                [ Printing ]
+S3 Frontend Designer  ──▶  EC2 Backend API  ◀──  POS Terminal Client
+(React/AntD)             (Express/PostgreSQL)     (Label Rendering)
 ```
 
-访问 `http://localhost:3003`
+## 🚀 Tech Stack
 
-### Docker 开发
+-   **Frontend**: React 18, Vite, Ant Design, Axios.
+-   **Backend**: Node.js, Express, PostgreSQL (AWS RDS).
+-   **Infrastructure**: Docker, Docker Compose, Nginx, AWS S3, AWS EC2.
+
+## ✨ Key Features
+
+-   **Visual Label Editor**:
+    -   Drag-and-drop elements (Text, Images, QR Codes, Lines).
+    -   Precise control over dimensions (mm), rotation, and styles.
+    -   Real-time canvas preview.
+-   **Template Management**:
+    -   Create, update, and delete multiple templates per business.
+    -   "Set Active" functionality for instant POS synchronization.
+-   **Synchronization API**: High-performance endpoint for POS devices to retrieve the latest active design.
+-   **Multi-language Support**: Full English and Chinese (Simplified) localization.
+
+## 🛠 Getting Started
+
+### Prerequisites
+
+-   Node.js (v18+)
+-   Docker and Docker Compose
+-   AWS CLI (for deployment)
+
+### Local Development
+
+1.  **Clone the repository**:
+    ```bash
+    git clone <repository-url>
+    cd labelprint
+    ```
+
+2.  **Backend Setup**:
+    ```bash
+    cd backend
+    npm install
+    # Copy .env.example to .env and configure your database
+    npm run dev
+    ```
+
+3.  **Frontend Setup**:
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
+
+## 📡 API Reference
+
+The backend runs on port `3080`. All designers and POS clients communicate through these endpoints.
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/label/sync` | **Sync API**: POS client fetches the active template. |
+| `GET` | `/label/templates/:businessId` | List all templates for a specific business. |
+| `POST` | `/label/template` | Create a new template. |
+| `PUT` | `/label/template/:id` | Update an existing template. |
+| `PUT` | `/label/template/:id/activate` | Set a template as the active one for a business. |
+
+### Sync API Example
 
 ```bash
-docker-compose up -d
-docker-compose logs -f backend
-docker-compose logs -f frontend
-```
-
-## 功能特性
-
-- ✅ 标签模板编辑器
-- ✅ 文字、条形码、二维码元素
-- ✅ DPI 和尺寸配置
-- ✅ 实时预览
-- ✅ 模板保存和管理
-
-## API 端点
-
-| 方法 | 路由 | 说明 |
-|------|------|------|
-| POST | `/label/sync` | **同步 API** - POS 设置请求此端点获取 active template（需要 businessId） |
-| GET | `/label/templates/:businessId` | 获取所有模板 |
-| GET | `/label/templates/:businessId/active` | 获取当前 active 的模板 |
-| GET | `/label/template/:id` | 获取单个模板 |
-| POST | `/label/template` | 创建模板 |
-| PUT | `/label/template/:id` | 更新模板 |
-| PUT | `/label/template/:id/activate` | 设置模板为 active |
-| DELETE | `/label/template/:id` | 删除模板 |
-
-### 同步 API 使用示例
-
-```bash
-curl -X POST http://localhost:3002/label/sync \
+curl -X POST http://<server-ip>/label/sync \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "businessId": "67295c445242136caa4511d4"
-  }'
+  -H "Authorization: Bearer <pos-token>" \
+  -d '{"businessId": "67295c445242136caa4511d4"}'
 ```
 
-响应示例：
-```json
-{
-  "success": true,
-  "data": {
-    "id": "template-id",
-    "businessId": "67295c445242136caa4511d4",
-    "name": "店铺标签",
-    "width": 60,
-    "height": 40,
-    "templateConfig": {
-      "elements": [...]
-    },
-    "isActive": true,
-    "createdAt": "2026-02-05T10:30:00Z",
-    "updatedAt": "2026-02-05T10:30:00Z"
-  },
-  "timestamp": "2026-02-05T10:35:22.123Z"
-}
+## 🚢 Deployment
 
-## 集成到主网站
-
-在公司的 Nginx 配置里添加：
-
-```nginx
-location /label {
-    proxy_pass http://label-backend:3002;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto https;
-}
+### Backend (Docker on EC2)
+The backend is managed via Docker. Use the provided deployment script to update the Nginx configuration:
+```bash
+bash deploy-nginx.sh
 ```
 
-## 技术栈
+### Frontend (S3)
+The designer is built and synced to AWS S3:
+```bash
+cd frontend
+npm run build
+aws s3 sync dist/ s3://your-bucket-name/label/ --delete
+```
 
-- **后端**: Node.js + Express + PostgreSQL
-- **前端**: React + Vite + Antd
-- **容器**: Docker + Docker Compose
+## 📂 Project Structure
 
-## 开发路线图
+```text
+├── backend/            # Express.js server & API
+│   ├── src/            # Source code (Models, Routes, Services)
+│   ├── nginx.conf      # Nginx proxy configuration
+│   └── docker-compose.yml
+├── frontend/           # React Designer application
+│   └── src/            # Components, Pages, State management
+└── pos-label/          # POS Integration example
+```
 
-- [ ] 完善元素编辑（位置、大小、旋转）
-- [ ] 支持更多条形码格式
-- [ ] 导入/导出模板
-- [ ] 模板分享功能
-- [ ] 批量编辑
+## 📝 License
+
+This project is proprietary. All rights reserved.
+
