@@ -176,7 +176,7 @@ export const renderTemplateToCanvas = async (
 export const fetchActiveTemplate = async (businessId?: string): Promise<Template> => {
   try {
     const bid = businessId || POS_WEB_CONFIG.businessId;
-    const response = await axios.post(`${POS_WEB_CONFIG.apiBase}/sync`, {
+    const response = await axios.post(`/label/sync`, {
       businessId: bid
     }, {
       headers: {

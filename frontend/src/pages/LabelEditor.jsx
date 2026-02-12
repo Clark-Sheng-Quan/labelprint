@@ -1174,13 +1174,14 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
 
   // Element Management
   const addElement = (type, partial = {}) => {
-    const newElement = {
+    // Set initial dimensions based on type
+    let initialProps = {
       id: Date.now(),
       type,
-      x: 5,
+      x: type === 'line' ? 0 : 5,
       y: 5,
-      width: type === 'text' ? 20 : 15, // Updated default width
-      height: type === 'text' ? 2.8 : 15, // Updated default height
+      width: type === 'text' ? 20 : type === 'line' ? (canvasWidth || 30) : 15,
+      height: type === 'text' ? 2.8 : 15,
       rotation: 0,
       fontSize: 8,
       fontWeight: 'normal',
@@ -1192,6 +1193,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
       text: type === 'text' ? 'New Text' : '',
       ...partial
     };
+    const newElement = initialProps;
     const newElements = [...elements, newElement];
     setElements(newElements);
     setSelectedElement(newElement.id);
@@ -1451,10 +1453,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   block 
                   style={{ textAlign: 'left', padding: '8px 12px' }}
                   onClick={() => addElement('line', { 
-                    x: 10, 
-                    y: 10, 
-                    width: 50, 
-                    height: 1, 
+                 
                     strokeColor: '#000', 
                     strokeWidth: 1,
                     lineStyle: 'solid'
@@ -1466,10 +1465,8 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   block
                   style={{ textAlign: 'left', padding: '8px 12px' }}
                   onClick={() => addElement('line', { 
-                    x: 10, 
-                    y: 10, 
-                    width: 50, 
-                    height: 1, 
+                   
+                   
                     strokeColor: '#000', 
                     strokeWidth: 1,
                     lineStyle: 'dashed'
@@ -1481,10 +1478,8 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   block
                   style={{ textAlign: 'left', padding: '8px 12px' }}
                   onClick={() => addElement('line', { 
-                    x: 10, 
-                    y: 10, 
-                    width: 50, 
-                    height: 1, 
+                  
+                     
                     strokeColor: '#000', 
                     strokeWidth: 1,
                     lineStyle: 'dotted'
@@ -1496,10 +1491,8 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   block
                   style={{ textAlign: 'left', padding: '8px 12px' }}
                   onClick={() => addElement('line', { 
-                    x: 10, 
-                    y: 10, 
-                    width: 50, 
-                    height: 1, 
+                    
+                    
                     strokeColor: '#000', 
                     strokeWidth: 1,
                     lineStyle: 'double'
@@ -1511,9 +1504,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   block
                   style={{ textAlign: 'left', padding: '8px 12px', display: 'flex', alignItems: 'center' }}
                   onClick={() => addElement('line', { 
-                    x: 10, 
                     y: 10, 
-                    width: 50, 
                     height: 1, 
                     strokeColor: '#000', 
                     strokeWidth: 1,
@@ -1529,10 +1520,8 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   block
                   style={{ textAlign: 'left', padding: '8px 12px', display: 'flex', alignItems: 'center' }}
                   onClick={() => addElement('line', { 
-                    x: 10, 
-                    y: 10, 
-                    width: 50, 
-                    height: 1, 
+                    
+                    
                     strokeColor: '#000', 
                     strokeWidth: 1,
                     lineStyle: 'doubleDotted'

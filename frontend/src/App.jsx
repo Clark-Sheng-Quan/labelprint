@@ -30,29 +30,33 @@ function LabelPrintPage() {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
   }
 
-  return activeTab === 'templates' ? (
-    <LabelTemplates 
-      onEditTemplate={(template) => {
-        setCurrentTemplate(template);
-        setActiveTab('editor');
-      }}
-      businessId={businessId}
-    />
-  ) : (
-    <LabelEditor 
-      onBack={() => setActiveTab('templates')} 
-      currentTemplate={currentTemplate}
-      businessId={businessId}
-    />
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {activeTab === 'templates' ? (
+        <LabelTemplates 
+          onEditTemplate={(template) => {
+            setCurrentTemplate(template);
+            setActiveTab('editor');
+          }}
+          businessId={businessId}
+        />
+      ) : (
+        <LabelEditor 
+          onBack={() => setActiveTab('templates')} 
+          currentTemplate={currentTemplate}
+          businessId={businessId}
+        />
+      )}
+    </div>
   );
 }
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/label">
       <LanguageProvider>
         <Routes>
-          <Route path="/label" element={<LabelPrintPage />} />
+          <Route path="/" element={<LabelPrintPage />} />
         </Routes>
       </LanguageProvider>
     </BrowserRouter>

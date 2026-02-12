@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { POS_TOKEN } from '../config/constants';
 
-// Production: https://54.90.180.79:3080
-const API_BASE_URL = 'https://54.90.180.79:3080';
+// Production: http://54.90.180.79 (Nginx HTTP)
+const API_BASE_URL = 'http://54.90.180.79';
 
 const client = axios.create({
   baseURL: API_BASE_URL,

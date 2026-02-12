@@ -22,20 +22,25 @@ function setupCORS() {
   const corsOptions = {
     origin: function(origin, callback) {
       const allowedOrigins = [
-        'https://www.vend88.com.au',
+        'http://www.vend88.com.au',
+        'https://www.vend88.com.au/',
         'https://dev.vend88.com',
-        'http://localhost:3081',    // Local frontend dev
-        'http://localhost:3080',    // Local backend access
-        'https://54.90.180.79'      // Production server
+        'http://dev.vend88.com/',
+        'https://54.90.180.79',     // Production server
+        'http://vend-88.s3-website-us-east-1.amazonaws.com',   // S3 frontend (http)
+        'https://vend-88.s3-website-us-east-1.amazonaws.com'    // S3 frontend (https)
       ];
 
+      // In development, allow all origins
       if (NODE_ENV === 'development') {
         return callback(null, true);
       }
 
+      // In production, check whitelist
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn(`CORS blocked request from origin: ${origin}`);
         callback(new Error('CORS not allowed'));
       }
     },
