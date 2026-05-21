@@ -1181,7 +1181,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
       x: type === 'line' ? 0 : 5,
       y: 5,
       width: type === 'text' ? 20 : type === 'line' ? (canvasWidth || 30) : 15,
-      height: type === 'text' ? 2.8 : 15,
+      height: type === 'text' ? 2.8 : type === 'line' ? 1 : 15,
       rotation: 0,
       fontSize: 8,
       fontWeight: 'normal',
@@ -1643,6 +1643,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                 step={0.1}
                 precision={1}
                 min={1}
+                disabled={currentElement.type === 'line' && (currentElement.rotation === 90 || currentElement.rotation === 270)}
                 onChange={v => {
                   if (currentElement.type === 'qrcode') {
                     updateSelected({ width: v || 1, height: v || 1 });
@@ -1657,8 +1658,12 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                 step={0.1}
                 precision={1}
                 min={1}
+                disabled={currentElement.type === 'line' && (currentElement.rotation === 0 || currentElement.rotation === 180)}
                 onChange={v => {
-                  if (currentElement.type === 'qrcode') {
+                  if (currentElement.type === 'line') {
+                    // For lines, when not rotated 90/270, height is always 1, don't allow changes
+                    return;
+                  } else if (currentElement.type === 'qrcode') {
                     updateSelected({ width: v || 1, height: v || 1 });
                   } else {
                     updateSelected({ height: v || 1 });
@@ -1928,8 +1933,28 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
 
             {/* Common Action Buttons */}
             <div className="prop-toolbar-row" style={{ marginTop: 20 }}>
-              <Button block icon={<RotateRightOutlined />} onClick={() => updateSelected({ rotation: (currentElement.rotation + 90) % 360 })}></Button>
-              <Button block icon={<RotateLeftOutlined />} onClick={() => updateSelected({ rotation: (currentElement.rotation - 90 + 360) % 360 })}></Button>
+              <Button block icon={<RotateRightOutlined />} onClick={() => {
+                const newRotation = (currentElement.rotation + 90) % 360;
+                const updates = { rotation: newRotation };
+                // For lines, always swap width and height when rotating
+                if (currentElement.type === 'line') {
+                  const temp = currentElement.width;
+                  updates.width = currentElement.height;
+                  updates.height = temp;
+                }
+                updateSelected(updates);
+              }}></Button>
+              <Button block icon={<RotateLeftOutlined />} onClick={() => {
+                const newRotation = (currentElement.rotation - 90 + 360) % 360;
+                const updates = { rotation: newRotation };
+                // For lines, always swap width and height when rotating
+                if (currentElement.type === 'line') {
+                  const temp = currentElement.width;
+                  updates.width = currentElement.height;
+                  updates.height = temp;
+                }
+                updateSelected(updates);
+              }}></Button>
             </div>
 
              <div className="prop-toolbar-row" style={{ display: 'flex', gap: 8 }}>
