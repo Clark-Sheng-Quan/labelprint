@@ -71,50 +71,62 @@ function renderText(el, orderData) {
     .join(CRLF);
 }
 
-function renderLine(el) {
+function renderLine(el, tplW, tplH) {
   const x = dots(el.x);
   const y = dots(el.y);
-  const w = dots(el.width);
+  const rotation = el.rotation ? Math.round(el.rotation / 90) * 90 : 0;
+  const isVertical = rotation === 90 || rotation === 270;
   const strokeDots = Math.max(1, dots(el.strokeWidth || 1));
+
+  // For vertical lines, swap width↔height so BAR draws top-to-bottom
+  let lineLen = isVertical
+    ? Math.min(dots(el.width), tplH - y)
+    : Math.min(dots(el.width), tplW - x);
+  const barW = isVertical ? strokeDots : lineLen;
+  const barH = isVertical ? lineLen  : strokeDots;
 
   if (el.lineStyle === 'dashed' || el.lineStyle === 'dotted') {
     const segLen = el.lineStyle === 'dashed' ? dots(3) : dots(1.5);
-    const gapLen = el.lineStyle === 'dashed' ? dots(3) : dots(1.5);
-    const lines = [];
+    const gapLen = segLen;
+    const cmds = [];
     let pos = 0;
-    while (pos < w) {
-      const len = Math.min(segLen, w - pos);
-      lines.push(`BAR ${x + pos},${y},${len},${strokeDots}`);
+    while (pos < lineLen) {
+      const seg = Math.min(segLen, lineLen - pos);
+      if (isVertical) {
+        cmds.push(`BAR ${x},${y + pos},${strokeDots},${seg}`);
+      } else {
+        cmds.push(`BAR ${x + pos},${y},${seg},${strokeDots}`);
+      }
       pos += segLen + gapLen;
     }
-    return lines.join(CRLF);
+    return cmds.join(CRLF);
   }
 
-  return `BAR ${x},${y},${w},${strokeDots}`;
+  return `BAR ${x},${y},${barW},${barH}`;
 }
 
-function renderQrcode(el, orderData) {
-  const x = dots(el.x);
-  const y = dots(el.y);
+function renderQrcode(el, orderData, tplW, tplH) {
+  const x = Math.min(dots(el.x), tplW - 1);
+  const y = Math.min(dots(el.y), tplH - 1);
   const cellwidth = Math.max(1, Math.min(10, Math.round(el.width * 8 / 25)));
   const content = replacePlaceholders(el.qrcodeContent || '', orderData).replace(/"/g, '\\"');
   return `QRCODE ${x},${y},M,${cellwidth},A,0,"${content}"`;
 }
 
-function renderBarcode(el, orderData) {
-  const x = dots(el.x);
-  const y = dots(el.y);
-  const h = dots(el.height);
+function renderBarcode(el, orderData, tplW, tplH) {
+  const x = Math.min(dots(el.x), tplW - 1);
+  const y = Math.min(dots(el.y), tplH - 1);
+  const h = Math.min(dots(el.height), tplH - y);
   const content = replacePlaceholders(el.text || '', orderData).replace(/"/g, '\\"');
   return `BARCODE ${x},${y},"128",${h},1,0,2,4,"${content}"`;
 }
 
-function renderElement(el, orderData) {
+function renderElement(el, orderData, tplW, tplH) {
   switch (el.type) {
     case 'text':    return renderText(el, orderData);
-    case 'line':    return renderLine(el);
-    case 'qrcode':  return renderQrcode(el, orderData);
-    case 'barcode': return renderBarcode(el, orderData);
+    case 'line':    return renderLine(el, tplW, tplH);
+    case 'qrcode':  return renderQrcode(el, orderData, tplW, tplH);
+    case 'barcode': return renderBarcode(el, orderData, tplW, tplH);
     case 'image':
       console.warn(`[tsplService] Image element id=${el.id} skipped (BITMAP not supported)`);
       return null;
@@ -124,6 +136,8 @@ function renderElement(el, orderData) {
 
 export function generateTSPL(template, orderData = {}) {
   const { width, height, templateConfig } = template;
+  const tplW = dots(width);
+  const tplH = dots(height);
   const elements = templateConfig?.elements || [];
 
   const lines = [
@@ -135,7 +149,7 @@ export function generateTSPL(template, orderData = {}) {
   ];
 
   for (const el of elements) {
-    const cmd = renderElement(el, orderData);
+    const cmd = renderElement(el, orderData, tplW, tplH);
     if (cmd) lines.push(cmd);
   }
 

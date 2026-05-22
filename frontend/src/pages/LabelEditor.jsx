@@ -1183,10 +1183,10 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
       width: type === 'text' ? 20 : type === 'line' ? (canvasWidth || 30) : 15,
       height: type === 'text' ? 2.8 : type === 'line' ? 1 : 15,
       rotation: 0,
-      fontSize: 6,
+      fontSize: 8,
       fontWeight: 'normal',
       fontStyle: 'normal',
-      textDecoration: 'none', 
+      textDecoration: 'none',
       textAlign: 'left',
       fontFamily: 'Arial',
       color: '#000000',
@@ -1776,26 +1776,6 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   />
                 </div>
 
-                <div className="prop-row">
-                  <span style={{ marginRight: 8 }}>{getTranslation('strokeColor')}:</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
-                    <ColorPicker 
-                      value={currentElement.strokeColor || '#000000'} 
-                      onChange={(color) => updateSelected({ strokeColor: color.toHexString() })}
-                      presets={[
-                        {
-                          label: 'Common',
-                          colors: ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff6b6b', '#4ecdc4', '#45b7d1']
-                        }
-                      ]}
-                    />
-                    <Input 
-                      value={currentElement.strokeColor || '#000000'} 
-                      onChange={(e) => updateSelected({ strokeColor: e.target.value })}
-                      style={{ flex: 1, padding: '0 4px', fontSize: 12 }}
-                    />
-                  </div>
-                </div>
               </>
             )}
 
@@ -1821,113 +1801,26 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
               <>
                 <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('properties')}</div>
                 <div className="prop-row">
-                  <Select 
-                    value={currentElement.fontFamily} 
+                  <span style={{ marginRight: 8, whiteSpace: 'nowrap' }}>Size:</span>
+                  <Select
+                    value={currentElement.fontSize}
                     style={{ flex: 1 }}
-                    onChange={v => updateSelected({ fontFamily: v })}
+                    onChange={v => updateSelected({ fontSize: v })}
                     options={[
-                      { value: 'Arial', label: 'Arial' },
-                      { value: 'Helvetica', label: 'Helvetica' },
-                      { value: 'Times New Roman', label: 'Times New Roman' },
-                      { value: 'Courier New', label: 'Courier New' },
-                      { value: 'Verdana', label: 'Verdana' },
-                      { value: 'Georgia', label: 'Georgia' },
-                      { value: 'Comic Sans MS', label: 'Comic Sans MS' },
-                      { value: 'Trebuchet MS', label: 'Trebuchet MS' },
-                      { value: '等线', label: '等线' }
-                    ]} 
+                      { value: 8,  label: 'Small · 2mm' },
+                      { value: 12, label: 'Medium · 3mm' },
+                      { value: 16, label: 'Large · 4mm' },
+                      { value: 24, label: 'X-Large · 6mm' },
+                    ]}
                   />
                 </div>
-                <div className="prop-row">
-                  <InputNumber 
-                    value={currentElement.fontSize} 
-                    onChange={v => updateSelected({ fontSize: v })} 
-                    style={{ width: 80 }} 
-                  />
-                  {/* Color Selection: ColorPicker + Input */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
-                     <ColorPicker 
-                       value={currentElement.color} 
-                       onChange={(color) => updateSelected({ color: color.toHexString() })}
-                       presets={[
-                         {
-                           label: 'Common',
-                           colors: ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff6b6b', '#4ecdc4', '#45b7d1']
-                         }
-                       ]}
-                     />
-                     <Input 
-                       value={currentElement.color} 
-                       onChange={(e) => updateSelected({ color: e.target.value })}
-                       style={{ flex: 1, padding: '0 4px', fontSize: 12 }}
-                     />
-                  </div>
-                </div>
-
-                <div className="prop-toolbar-row">
-                   <Button.Group>
-                      <Button 
-                        icon={<AlignLeftOutlined />} 
-                        type={currentElement.textAlign === 'left' ? 'primary' : 'default'}
-                        onClick={() => updateSelected({ textAlign: 'left' })}
-                      />
-                      <Button 
-                        icon={<AlignCenterOutlined />} 
-                        type={currentElement.textAlign === 'center' ? 'primary' : 'default'}
-                        onClick={() => updateSelected({ textAlign: 'center' })}
-                      />
-                      <Button 
-                        icon={<AlignRightOutlined />} 
-                        type={currentElement.textAlign === 'right' ? 'primary' : 'default'}
-                        onClick={() => updateSelected({ textAlign: 'right' })}
-                      />
-                      <Button 
-                        icon={<MenuOutlined />} 
-                        type={currentElement.textAlign === 'justify' ? 'primary' : 'default'}
-                        onClick={() => updateSelected({ textAlign: 'justify' })}
-                        title="Justify"
-                      />
-                       <Button 
-                        icon={<ColumnWidthOutlined />} 
-                        type={currentElement.textAlign === 'distribute' ? 'primary' : 'default'}
-                        onClick={() => updateSelected({ textAlign: 'distribute' })}
-                        title="Distribute"
-                      />
-                   </Button.Group>
-                </div>
-                 <div className="prop-toolbar-row">
-                   <Button.Group>
-                      <Button 
-                        icon={<BoldOutlined />} 
-                        type={currentElement.fontWeight === 'bold' ? 'primary' : 'default'}
-                        onClick={() => updateSelected({ fontWeight: currentElement.fontWeight === 'bold' ? 'normal' : 'bold' })}
-                      />
-                      <Button 
-                        icon={<ItalicOutlined />}
-                        type={currentElement.fontStyle === 'italic' ? 'primary' : 'default'}
-                        onClick={() => updateSelected({ fontStyle: currentElement.fontStyle === 'italic' ? 'normal' : 'italic' })}
-                      />
-                      <Button 
-                        icon={<UnderlineOutlined />}
-                        type={currentElement.textDecoration && currentElement.textDecoration.includes('underline') ? 'primary' : 'default'}
-                        onClick={() => toggleTextDecoration('underline')}
-                      />
-                      <Button 
-                        icon={<StrikethroughOutlined />}
-                        type={currentElement.textDecoration && currentElement.textDecoration.includes('line-through') ? 'primary' : 'default'}
-                        onClick={() => toggleTextDecoration('line-through')} 
-                      />
-                   </Button.Group>
-                </div>
-                
                 <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('content')}</div>
-                <TextArea 
+                <TextArea
                   ref={contentInputRef}
-                  rows={4} 
+                  rows={4}
                   value={currentElement.text}
                   onChange={e => updateSelected({ text: e.target.value })}
                 />
-                {/* <div className="help-text">修改内容仅用于当前排版预览效果...</div> */}
               </>
             )}
 
@@ -1936,22 +1829,24 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
               <Button block icon={<RotateRightOutlined />} onClick={() => {
                 const newRotation = (currentElement.rotation + 90) % 360;
                 const updates = { rotation: newRotation };
-                // For lines, always swap width and height when rotating
                 if (currentElement.type === 'line') {
-                  const temp = currentElement.width;
-                  updates.width = currentElement.height;
-                  updates.height = temp;
+                  updates.width  = Math.min(currentElement.height, canvasWidth  - currentElement.x);
+                  updates.height = Math.min(currentElement.width,  canvasHeight - currentElement.y);
+                } else {
+                  updates.width  = Math.min(currentElement.width,  canvasWidth  - currentElement.x);
+                  updates.height = Math.min(currentElement.height, canvasHeight - currentElement.y);
                 }
                 updateSelected(updates);
               }}></Button>
               <Button block icon={<RotateLeftOutlined />} onClick={() => {
                 const newRotation = (currentElement.rotation - 90 + 360) % 360;
                 const updates = { rotation: newRotation };
-                // For lines, always swap width and height when rotating
                 if (currentElement.type === 'line') {
-                  const temp = currentElement.width;
-                  updates.width = currentElement.height;
-                  updates.height = temp;
+                  updates.width  = Math.min(currentElement.height, canvasWidth  - currentElement.x);
+                  updates.height = Math.min(currentElement.width,  canvasHeight - currentElement.y);
+                } else {
+                  updates.width  = Math.min(currentElement.width,  canvasWidth  - currentElement.x);
+                  updates.height = Math.min(currentElement.height, canvasHeight - currentElement.y);
                 }
                 updateSelected(updates);
               }}></Button>
