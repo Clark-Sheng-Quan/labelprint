@@ -12,9 +12,7 @@ const db = pgp({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  ssl: {
-    rejectUnauthorized: false  // Allow self-signed certs from RDS
-  }
+  ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false }
 });
 
 export async function initializeDatabase() {

@@ -1,0 +1,316 @@
+{
+  "PickMethod": {},
+  "createdAt": "Jan 16, 2026 1:52:28 PM",
+  "id": "a6700339-4be6-4d22-9332-b89b6bbae049",
+  "member": {},
+  "modifiedTotalCost": {},
+  "notes": "",
+  "orderNumber": {},
+  "orderType": "POS",
+  "orderitems": [
+    {
+      "id": "d829259e-37ca-41e4-93b7-0ea867c5ee02",
+      "isValidKds": true,
+      "itemState": "INPROGRESS",
+      "orderItems": [],
+      "product": {
+        "active": true,
+        "calories": 0,
+        "category": [
+          "Ramen"
+        ],
+        "description": "Tonkotsu ramen is the king of Japenese soups for a reason. Deeply flavourful broth is in perfect balance with the pork and those wonderful ramen noodles.\n",
+        "image_url": [
+          "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/uploads/TonkotsuRamen1722999507.jpeg",
+          "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/uploads/TonkotsuRamen1722999930.mp4"
+        ],
+        "name": "Tonkotsu Ramen",
+        "options": [
+          {
+            "_id": "66e1456131136ac4b7860fb5",
+            "is_required": true,
+            "max_select": 1,
+            "min_select": 1,
+            "name": "Sizing",
+            "option_items": [
+              {
+                "_id": "66e258f831136ac4b7860fea",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e258f831136ac4b7860fea.jpeg",
+                "name": "small",
+                "option_id": "66e1456131136ac4b7860fb5",
+                "price_adjust": 1,
+                "qty": 1,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2590331136ac4b7860feb",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2590331136ac4b7860feb.jpeg",
+                "name": "Medium",
+                "option_id": "66e1456131136ac4b7860fb5",
+                "price_adjust": 4,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2591031136ac4b7860fec",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2591031136ac4b7860fec.jpeg",
+                "name": "Large",
+                "option_id": "66e1456131136ac4b7860fb5",
+                "price_adjust": 7,
+                "qty": 0,
+                "type": "normal"
+              }
+            ],
+            "product": [
+              "66e1449331136ac4b7860fb4",
+              "66e248e131136ac4b7860fc6",
+              "66e2497531136ac4b7860fc7",
+              "66e24a2631136ac4b7860fc8",
+              "66e24b1e31136ac4b7860fc9",
+              "66e24be431136ac4b7860fca",
+              "66b2e2a628f334f17a0e386f",
+              "66b1aca75dd10a69f04167d3",
+              "6639a5e06a487b60ebb99ab8",
+              "67e23c573019ed071dbd41c2",
+              "67e23bb13019ed071dbd41bd",
+              "68e4923c12a465ffa6ad175b"
+            ],
+            "single_choice": true
+          },
+          {
+            "_id": "66e24c1631136ac4b7860fcb",
+            "is_required": true,
+            "max_select": 5,
+            "min_select": 0,
+            "name": "Choice of Base",
+            "option_items": [
+              {
+                "_id": "66e24dae31136ac4b7860fcc",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e24dae31136ac4b7860fcc.jpeg",
+                "name": "Premium Açaí",
+                "option_id": "66e24c1631136ac4b7860fcb",
+                "price_adjust": 2,
+                "qty": 1,
+                "type": "normal"
+              },
+              {
+                "_id": "66e24e0931136ac4b7860fcd",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e24e0931136ac4b7860fcd.jpeg",
+                "name": "Vegan Soft Serve",
+                "option_id": "66e24c1631136ac4b7860fcb",
+                "price_adjust": 2.5,
+                "qty": 0,
+                "type": "normal"
+              }
+            ],
+            "product": [
+              "66e1449331136ac4b7860fb4",
+              "66e248e131136ac4b7860fc6",
+              "66e2497531136ac4b7860fc7",
+              "66e24a2631136ac4b7860fc8",
+              "66e24b1e31136ac4b7860fc9",
+              "66e24be431136ac4b7860fca",
+              "66b2e2a628f334f17a0e386f",
+              "6639a5e06a487b60ebb99ab8"
+            ],
+            "single_choice": false
+          },
+          {
+            "_id": "66e24fe031136ac4b7860fd3",
+            "is_required": false,
+            "max_select": 1,
+            "min_select": 0,
+            "name": "Extra Fruit",
+            "option_items": [
+              {
+                "_id": "66e2520231136ac4b7860fd4",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2520231136ac4b7860fd4.jpeg",
+                "name": "Banana",
+                "option_id": "66e24fe031136ac4b7860fd3",
+                "price_adjust": 1.5,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2521631136ac4b7860fd5",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2521631136ac4b7860fd5.jpeg",
+                "name": "Strawberry",
+                "option_id": "66e24fe031136ac4b7860fd3",
+                "price_adjust": 1.5,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2523231136ac4b7860fd6",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2523231136ac4b7860fd6.jpeg",
+                "name": "Passion Fruit",
+                "option_id": "66e24fe031136ac4b7860fd3",
+                "price_adjust": 1.5,
+                "qty": 1,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2524731136ac4b7860fd7",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2524731136ac4b7860fd7.jpeg",
+                "name": "Kiwi",
+                "option_id": "66e24fe031136ac4b7860fd3",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2525531136ac4b7860fd8",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2525531136ac4b7860fd8.jpeg",
+                "name": "Blueberries",
+                "option_id": "66e24fe031136ac4b7860fd3",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2527831136ac4b7860fd9",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2527831136ac4b7860fd9.jpeg",
+                "name": "Pineapple",
+                "option_id": "66e24fe031136ac4b7860fd3",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2528731136ac4b7860fda",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2528731136ac4b7860fda.jpeg",
+                "name": "Watermelon",
+                "option_id": "66e24fe031136ac4b7860fd3",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              }
+            ],
+            "product": [
+              "66e1449331136ac4b7860fb4",
+              "66e248e131136ac4b7860fc6",
+              "66e2497531136ac4b7860fc7",
+              "66e24a2631136ac4b7860fc8",
+              "66e24b1e31136ac4b7860fc9",
+              "66e24be431136ac4b7860fca",
+              "66b2e2a628f334f17a0e386f"
+            ],
+            "single_choice": true
+          },
+          {
+            "_id": "66e252ac31136ac4b7860fdb",
+            "is_required": true,
+            "max_select": 5,
+            "min_select": 2,
+            "name": "Extra Topping",
+            "option_items": [
+              {
+                "_id": "66e2552231136ac4b7860fdc",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2552231136ac4b7860fdc.jpeg",
+                "name": "Biscoff",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2553231136ac4b7860fdd",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2553231136ac4b7860fdd.jpeg",
+                "name": "Nutella",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2558831136ac4b7860fe0",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2558831136ac4b7860fe0.jpeg",
+                "name": "Condensed Milk",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e2559831136ac4b7860fe1",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e2559831136ac4b7860fe1.jpeg",
+                "name": "Carmel",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e255aa31136ac4b7860fe2",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e255aa31136ac4b7860fe2.jpeg",
+                "name": "Belgian Chocolate",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e255b931136ac4b7860fe3",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e255b931136ac4b7860fe3.jpeg",
+                "name": "Honey",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e255c731136ac4b7860fe4",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e255c731136ac4b7860fe4.jpeg",
+                "name": "Peanut Butter",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              },
+              {
+                "_id": "66e255d931136ac4b7860fe5",
+                "media_url": "https://vendsysimg.s3.ap-southeast-2.amazonaws.com/66e255d931136ac4b7860fe5.jpeg",
+                "name": "Pistachio",
+                "option_id": "66e252ac31136ac4b7860fdb",
+                "price_adjust": 1,
+                "qty": 0,
+                "type": "normal"
+              }
+            ],
+            "product": [
+              "66e1449331136ac4b7860fb4",
+              "66e248e131136ac4b7860fc6",
+              "66e2497531136ac4b7860fc7",
+              "66e24a2631136ac4b7860fc8",
+              "66e24b1e31136ac4b7860fc9",
+              "66e24be431136ac4b7860fca",
+              "66b2e2a628f334f17a0e386f",
+              "6639a5e06a487b60ebb99ab8"
+            ],
+            "single_choice": false
+          }
+        ],
+        "price": 21,
+        "pricing_unit": "quantity",
+        "product_id": "66b2e2a628f334f17a0e386f",
+        "sku": "asf123Sku",
+        "tax_required": true
+      },
+      "qty": 1
+    }
+  ],
+  "ordermode": "DINEIN",
+  "paymentDetails": {
+    "TransactionID": {},
+    "cardAmount": 0,
+    "cashAmount": 0,
+    "isPaid": false,
+    "totalAmount": 0
+  },
+  "status": "IN_PROGRESS",
+  "surcharge": 0,
+  "tableNumber": {},
+  "tableOrder": {},
+  "tableSize": 1,
+  "userID": {}
+}

@@ -34,8 +34,8 @@ export default function LabelTemplates({ onEditTemplate, businessId = null }) {
       onEditTemplate({
         id: null,
         name: 'New Template',
-        width: 30,
-        height: 40,
+        width: 40,
+        height: 30,
         is_active: false,
         templateConfig: { elements: [] }
       });

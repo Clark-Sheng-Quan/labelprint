@@ -1,0 +1,61 @@
+{"orders": [
+{
+            "_id": "69785415bd824f7d3984ce5c",
+            "collect_code": null,
+            "discount": 0,
+            "dispatch_vend": {},
+            "order_num": 1128,
+            "payment_type": "tyro",
+            "pick_method": "Take-Away",
+            "pick_time": "2026-01-27 00:00:00",
+            "price": 6,
+            "products": [
+                {
+                    "_id": "68e89b979ea6af82724cbcfd",
+                    "category": [
+                        "Milk Tea"
+                    ],
+                    "name": "Spring Tieguanyin Milk Tea",
+                    "option": [
+                        {
+                            "name": "Soy",
+                            "price_adjust": 1,
+                            "qty": 1
+                        },
+                        {
+                            "name": "Large",
+                            "price_adjust": 0.9,
+                            "qty": 1
+                        },
+                        {
+                            "name": "100% Sugar",
+                            "price_adjust": 0,
+                            "qty": 1
+                        },
+                        {
+                            "name": "50% Ice",
+                            "price_adjust": 0,
+                            "qty": 1
+                        },
+                        {
+                            "name": "Honey Pearls",
+                            "price_adjust": 1,
+                            "qty": 1
+                        },
+                        {
+                            "name": "Oat",
+                            "price_adjust": 1.5,
+                            "qty": 1
+                        }
+                    ],
+                    "price": 6,
+                    "qty": 1
+                }
+            ],
+            "requirements": "",
+            "source": "online",
+            "status": "unpaid",
+            "surchage": 0,
+            "time": "2026-01-27 05:58:45 +0000",
+            "user_id": "68e4ab9412a465ffa6ad179f"
+        }]}

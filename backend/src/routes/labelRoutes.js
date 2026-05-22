@@ -1,6 +1,7 @@
 import express from 'express';
 import { LabelTemplate } from '../models/LabelTemplate.js';
 import { verifyTokenMiddleware } from '../services/tokenService.js';
+import { generateTSPL } from '../services/tsplService.js';
 
 const router = express.Router();
 
@@ -175,6 +176,42 @@ router.put('/template/:id/activate', async (req, res) => {
     });
   } catch (error) {
     console.error('Error activating template:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Render active template as TSPL commands for direct printing
+router.post('/render', verifyTokenMiddleware(), async (req, res) => {
+  try {
+    const { businessId, orderData = {} } = req.body;
+
+    if (!businessId) {
+      return res.status(400).json({
+        success: false,
+        error: 'businessId is required'
+      });
+    }
+
+    const template = await LabelTemplate.findActiveByBusinessId(businessId);
+
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        error: 'No active template found for this business'
+      });
+    }
+
+    const tspl = generateTSPL(template, orderData);
+
+    res.json({
+      success: true,
+      tspl
+    });
+  } catch (error) {
+    console.error('Error rendering template:', error);
     res.status(500).json({
       success: false,
       error: error.message

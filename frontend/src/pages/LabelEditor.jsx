@@ -60,8 +60,8 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
   const [selectedElement, setSelectedElement] = useState(null);
   const [templateName, setTemplateName] = useState('');
   const [templateId, setTemplateId] = useState(null);
-  const [canvasWidth, setCanvasWidth] = useState(30);
-  const [canvasHeight, setCanvasHeight] = useState(40);
+  const [canvasWidth, setCanvasWidth] = useState(40);
+  const [canvasHeight, setCanvasHeight] = useState(30);
   const [topMargin, setTopMargin] = useState(0);
   const [rightMargin, setRightMargin] = useState(0);
   const [bottomMargin, setBottomMargin] = useState(0);
@@ -1183,7 +1183,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
       width: type === 'text' ? 20 : type === 'line' ? (canvasWidth || 30) : 15,
       height: type === 'text' ? 2.8 : type === 'line' ? 1 : 15,
       rotation: 0,
-      fontSize: 8,
+      fontSize: 6,
       fontWeight: 'normal',
       fontStyle: 'normal',
       textDecoration: 'none', 
@@ -1553,8 +1553,8 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
               placeholder={getTranslation('enterTemplateName')}
             />
             <Button.Group>
-              <Button 
-                icon={<UndoOutlined />} 
+              <Button
+                icon={<UndoOutlined />}
                 onClick={() => {
                   if (historyIndex > 0) {
                     const newIndex = historyIndex - 1;
@@ -1565,9 +1565,9 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   }
                 }}
                 disabled={historyIndex <= 0}
-              />
-              <Button 
-                icon={<RedoOutlined />} 
+              >{getTranslation('undo')}</Button>
+              <Button
+                icon={<RedoOutlined />}
                 onClick={() => {
                   if (historyIndex < history.length - 1) {
                     const newIndex = historyIndex + 1;
@@ -1578,7 +1578,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   }
                 }}
                 disabled={historyIndex >= history.length - 1}
-              />
+              >{getTranslation('redo')}</Button>
             </Button.Group>
           </div>
           <div className="header-actions">
@@ -1957,10 +1957,6 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
               }}></Button>
             </div>
 
-             <div className="prop-toolbar-row" style={{ display: 'flex', gap: 8 }}>
-               <Button style={{ flex: 1 }} onClick={copySelected}>{getTranslation('copy')}</Button>
-               <Button style={{ flex: 1 }} onClick={cutSelected}>{getTranslation('cut')}</Button>
-            </div>
             <div className="prop-toolbar-row">
                <Button block danger onClick={deleteSelected}>{getTranslation('delete')}</Button>
             </div>

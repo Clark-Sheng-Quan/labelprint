@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { POS_TOKEN } from '../config/constants';
 
-// Production: http://54.90.180.79 (Nginx HTTP)
-const API_BASE_URL = 'http://54.90.180.79';
+// Production: use empty string so requests go to same origin (nginx proxies /label to backend)
+// Local dev: vite.config.js proxies /label/template(s) to localhost:3080
+const API_BASE_URL = '';
 
 const client = axios.create({
   baseURL: API_BASE_URL,

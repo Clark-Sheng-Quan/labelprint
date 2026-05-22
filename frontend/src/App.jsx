@@ -27,7 +27,12 @@ function LabelPrintPage() {
   }, [searchParams]);
 
   if (!businessId) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 8, color: '#888' }}>
+        <div>Missing <code>business_id</code> parameter</div>
+        <div style={{ fontSize: 13 }}>Access via <code>?business_id=YOUR_BUSINESS_ID</code></div>
+      </div>
+    );
   }
 
   return (

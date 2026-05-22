@@ -199,3 +199,38 @@ export const syncActiveTemplate = async (businessId?: string): Promise<Template>
     throw error;
   }
 };
+
+export const fetchTSPL = async (
+  businessId: string,
+  orderData: Record<string, string> = {}
+): Promise<string> => {
+  try {
+    const response = await axios.post(`/label/render`, {
+      businessId,
+      orderData
+    }, {
+      headers: {
+        'Authorization': `Bearer ${POS_WEB_CONFIG.token}`
+      }
+    });
+    return response.data.tspl as string;
+  } catch (error) {
+    console.error('Failed to fetch TSPL:', error);
+    throw error;
+  }
+};
+
+// Extract #{key} placeholder names from a template's text/qrcode elements
+export const extractPlaceholders = (template: Template): string[] => {
+  const found = new Set<string>();
+  const regex = /#\{(\w+)\}/g;
+  for (const el of template.templateConfig.elements) {
+    for (const field of [el.text, el.qrcodeContent]) {
+      if (!field) continue;
+      let m: RegExpExecArray | null;
+      regex.lastIndex = 0;
+      while ((m = regex.exec(field)) !== null) found.add(m[1]);
+    }
+  }
+  return Array.from(found);
+};
