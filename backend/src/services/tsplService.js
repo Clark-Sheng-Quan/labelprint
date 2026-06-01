@@ -2,9 +2,9 @@ const CRLF = '\r\n';
 
 const dots = (mm) => Math.round(mm * 8);
 
-// TSS fonts support Chinese + English
-const FONT_CHAR_WIDTH  = { 'TSS16.BF2': 16, 'TSS24.BF2': 24, 'TSS32.BF2': 32 };
-const FONT_CHAR_HEIGHT = { 'TSS16.BF2': 16, 'TSS24.BF2': 24, 'TSS32.BF2': 32 };
+// TSS fonts support Chinese + English (简体中文 GB 码)
+const FONT_CHAR_WIDTH  = { 'TSS16.BF2': 16, 'TSS20.BF2': 20, 'TSS24.BF2': 24, 'TSS32.BF2': 32 };
+const FONT_CHAR_HEIGHT = { 'TSS16.BF2': 16, 'TSS20.BF2': 20, 'TSS24.BF2': 24, 'TSS32.BF2': 32 };
 
 // Pick the font + multiplier closest to the target dot size
 // editor fontSize * 2 ≈ target dots height (at 200DPI, scale=8)
@@ -12,6 +12,7 @@ function selectFontAndMul(fontSize) {
   const targetDots = Math.round((fontSize || 8) * 2);
   const bases = [
     { font: 'TSS16.BF2', baseDots: 16 },
+    { font: 'TSS20.BF2', baseDots: 20 },
     { font: 'TSS24.BF2', baseDots: 24 },
     { font: 'TSS32.BF2', baseDots: 32 },
   ];
@@ -60,7 +61,18 @@ function renderText(el, orderData) {
   const x = dots(el.x);
   const y = dots(el.y);
   const maxW = dots(el.width);
-  const { font, mul } = selectFontAndMul(el.fontSize);
+  
+  // Use specified font if available, otherwise auto-select
+  let font, mul;
+  if (el.fontFamily && FONT_CHAR_WIDTH[el.fontFamily]) {
+    font = el.fontFamily;
+    // Use fontSize as multiplier hint, default mul=1
+    const targetDots = Math.round((el.fontSize || 8) * 2);
+    mul = Math.max(1, Math.min(10, Math.round(targetDots / FONT_CHAR_HEIGHT[font])));
+  } else {
+    ({ font, mul } = selectFontAndMul(el.fontSize));
+  }
+  
   const rotation = el.rotation ? Math.round(el.rotation / 90) * 90 : 0;
   const raw = replacePlaceholders(el.text || '', orderData);
   const wrappedLines = wrapText(raw, font, mul, maxW);
@@ -76,7 +88,8 @@ function renderLine(el, tplW, tplH) {
   const y = dots(el.y);
   const rotation = el.rotation ? Math.round(el.rotation / 90) * 90 : 0;
   const isVertical = rotation === 90 || rotation === 270;
-  const strokeDots = Math.max(1, dots(el.strokeWidth || 1));
+  // strokeWidth is already in dots, no conversion needed
+  const strokeDots = Math.max(1, el.strokeWidth || 2);
 
   // For vertical lines, swap width↔height so BAR draws top-to-bottom
   let lineLen = isVertical
@@ -86,7 +99,9 @@ function renderLine(el, tplW, tplH) {
   const barH = isVertical ? lineLen  : strokeDots;
 
   if (el.lineStyle === 'dashed' || el.lineStyle === 'dotted') {
-    const segLen = el.lineStyle === 'dashed' ? dots(3) : dots(1.5);
+    // TSPL dashed: 2 dots segment, 2 dots gap
+    // TSPL dotted: 1 dot segment, 1 dot gap
+    const segLen = el.lineStyle === 'dashed' ? 2 * 8 : 1 * 8;  // Convert to dots (8 dots per mm)
     const gapLen = segLen;
     const cmds = [];
     let pos = 0;

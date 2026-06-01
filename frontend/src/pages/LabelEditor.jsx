@@ -505,63 +505,31 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
         
         ctx.restore();
       } else if (el.type === 'line') {
-        // Draw line
+        // Draw line with adjustable width (strokeWidth is in dots)
         ctx.strokeStyle = el.strokeColor || '#000000';
-        ctx.lineWidth = el.strokeWidth || 1;
+        // Convert dots to canvas pixels: dots * (scale / 8) since scale=8 (dots per mm at 200DPI)
+        const lineWidthPx = Math.max(0.5, (el.strokeWidth || 2) * scale / 8);
+        ctx.lineWidth = lineWidthPx;
         
-        // Apply line style
+        // Apply line style - match TSPL intervals
         if (el.lineStyle === 'dashed') {
-          ctx.setLineDash([5, 5]);
+          // TSPL dashed: 2mm segment, 2mm gap = 16 dots each at 8 dots/mm
+          const dashSize = Math.max(4, Math.round(2 * scale));  // 2mm in canvas pixels
+          ctx.setLineDash([dashSize, dashSize]);
           ctx.beginPath();
           ctx.moveTo(x, y);
           ctx.lineTo(x + w, y);
           ctx.stroke();
         } else if (el.lineStyle === 'dotted') {
-          ctx.setLineDash([2, 3]);
+          // TSPL dotted: 1mm segment, 1mm gap = 8 dots each
+          const dotSize = Math.max(2, Math.round(1 * scale));  // 1mm in canvas pixels
+          ctx.setLineDash([dotSize, dotSize]);
           ctx.beginPath();
           ctx.moveTo(x, y);
           ctx.lineTo(x + w, y);
           ctx.stroke();
-        } else if (el.lineStyle === 'double') {
-          // Double line - draw 2 parallel lines
-          const spacing = (el.strokeWidth || 1) + 1;
-          ctx.setLineDash([]);
-          ctx.beginPath();
-          ctx.moveTo(x, y - spacing);
-          ctx.lineTo(x + w, y - spacing);
-          ctx.stroke();
-          
-          ctx.beginPath();
-          ctx.moveTo(x, y + spacing);
-          ctx.lineTo(x + w, y + spacing);
-          ctx.stroke();
-        } else if (el.lineStyle === 'doubleDashed') {
-          // Double dashed line
-          const spacing = (el.strokeWidth || 1) + 1;
-          ctx.setLineDash([5, 5]);
-          ctx.beginPath();
-          ctx.moveTo(x, y - spacing);
-          ctx.lineTo(x + w, y - spacing);
-          ctx.stroke();
-          
-          ctx.beginPath();
-          ctx.moveTo(x, y + spacing);
-          ctx.lineTo(x + w, y + spacing);
-          ctx.stroke();
-        } else if (el.lineStyle === 'doubleDotted') {
-          // Double dotted line
-          const spacing = (el.strokeWidth || 1) + 1;
-          ctx.setLineDash([2, 3]);
-          ctx.beginPath();
-          ctx.moveTo(x, y - spacing);
-          ctx.lineTo(x + w, y - spacing);
-          ctx.stroke();
-          
-          ctx.beginPath();
-          ctx.moveTo(x, y + spacing);
-          ctx.lineTo(x + w, y + spacing);
-          ctx.stroke();
         } else {
+          // solid or default
           ctx.setLineDash([]);
           ctx.beginPath();
           ctx.moveTo(x, y);
@@ -1188,7 +1156,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
       fontStyle: 'normal',
       textDecoration: 'none',
       textAlign: 'left',
-      fontFamily: 'Arial',
+      fontFamily: type === 'text' ? 'TSS16.BF2' : 'Arial',
       color: '#000000',
       text: type === 'text' ? 'New Text' : '',
       ...partial
@@ -1453,84 +1421,34 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   block 
                   style={{ textAlign: 'left', padding: '8px 12px' }}
                   onClick={() => addElement('line', { 
-                 
                     strokeColor: '#000', 
-                    strokeWidth: 1,
+                    strokeWidth: 2,
                     lineStyle: 'solid'
                   })}
                 >
-                  <div style={{ borderBottom: '2px solid #000', width: '100%' }}></div>
+                  <div style={{ borderBottom: '1px solid #000', width: '100%' }}></div>
                 </Button>
                 <Button 
                   block
                   style={{ textAlign: 'left', padding: '8px 12px' }}
                   onClick={() => addElement('line', { 
-                   
-                   
                     strokeColor: '#000', 
-                    strokeWidth: 1,
+                    strokeWidth: 2,
                     lineStyle: 'dashed'
                   })}
                 >
-                  <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
+                  <div style={{ borderBottom: '1px dashed #000', width: '100%' }}></div>
                 </Button>
                 <Button 
                   block
                   style={{ textAlign: 'left', padding: '8px 12px' }}
                   onClick={() => addElement('line', { 
-                  
-                     
                     strokeColor: '#000', 
-                    strokeWidth: 1,
+                    strokeWidth: 2,
                     lineStyle: 'dotted'
                   })}
                 >
-                  <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
-                </Button>
-                <Button 
-                  block
-                  style={{ textAlign: 'left', padding: '8px 12px' }}
-                  onClick={() => addElement('line', { 
-                    
-                    
-                    strokeColor: '#000', 
-                    strokeWidth: 1,
-                    lineStyle: 'double'
-                  })}
-                >
-                  <div style={{ borderBottom: '5px double #000', width: '100%' }}></div>
-                </Button>
-                <Button 
-                  block
-                  style={{ textAlign: 'left', padding: '8px 12px', display: 'flex', alignItems: 'center' }}
-                  onClick={() => addElement('line', { 
-                    y: 10, 
-                    height: 1, 
-                    strokeColor: '#000', 
-                    strokeWidth: 1,
-                    lineStyle: 'doubleDashed'
-                  })}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', height: 12, justifyContent: 'center' }}>
-                    <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
-                    <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
-                  </div>
-                </Button>
-                <Button 
-                  block
-                  style={{ textAlign: 'left', padding: '8px 12px', display: 'flex', alignItems: 'center' }}
-                  onClick={() => addElement('line', { 
-                    
-                    
-                    strokeColor: '#000', 
-                    strokeWidth: 1,
-                    lineStyle: 'doubleDotted'
-                  })}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', height: 12, justifyContent: 'center' }}>
-                    <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
-                    <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
-                  </div>
+                  <div style={{ borderBottom: '1px dotted #000', width: '100%' }}></div>
                 </Button>
               </div>
             </div>
@@ -1721,45 +1639,22 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                       { 
                         value: 'solid', 
                         label: (
-                          <div style={{ borderBottom: '2px solid #000', width: 80, height: 0 }}></div>
+                          <div style={{ borderBottom: '1px solid #000', width: 80, height: 0 }}></div>
                         ) 
                       }, 
                       { 
                         value: 'dashed', 
                         label: (
-                          <div style={{ borderBottom: '2px dashed #000', width: 80, height: 0 }}></div>
+                          <div style={{ borderBottom: '1px dashed #000', width: 80, height: 0 }}></div>
                         ) 
                       },
                       { 
                         value: 'dotted', 
                         label: (
-                          <div style={{ borderBottom: '2px dotted #000', width: 80, height: 0 }}></div>
+                          <div style={{ borderBottom: '1px dotted #000', width: 80, height: 0 }}></div>
                         ) 
                       },
-                      { 
-                        value: 'double', 
-                        label: (
-                          <div style={{ borderBottom: '4px double #000', width: 80, height: 0 }}></div>
-                        ) 
-                      },
-                      { 
-                        value: 'doubleDashed', 
-                        label: (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: 80, height: 12, justifyContent: 'center' }}>
-                            <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
-                            <div style={{ borderBottom: '2px dashed #000', width: '100%' }}></div>
-                          </div>
-                        ) 
-                      },
-                      { 
-                        value: 'doubleDotted', 
-                        label: (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, width: 80, height: 12, justifyContent: 'center' }}>
-                            <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
-                            <div style={{ borderBottom: '2px dotted #000', width: '100%' }}></div>
-                          </div>
-                        ) 
-                      }
+
                     ]} 
                   />
                 </div>
@@ -1767,10 +1662,11 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                 <div className="prop-row" style={{ marginTop: 12 }}>
                   <span style={{ marginRight: 8 }}>{getTranslation('lineWidth')}:</span>
                   <InputNumber 
-                    value={currentElement.strokeWidth || 1} 
-                    min={0.5}
-                    step={0.5}
-                    precision={1}
+                    value={currentElement.strokeWidth || 2} 
+                    min={1}
+                    max={50}
+                    step={1}
+                    precision={0}
                     onChange={v => updateSelected({ strokeWidth: v })} 
                     style={{ flex: 1 }}
                   />
@@ -1805,12 +1701,12 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   <Select
                     value={currentElement.fontSize}
                     style={{ flex: 1 }}
-                    onChange={v => updateSelected({ fontSize: v })}
+                    onChange={v => updateSelected({ fontSize: v, fontFamily: v === 8 ? 'TSS16.BF2' : v === 10 ? 'TSS20.BF2' : v === 12 ? 'TSS24.BF2' : 'TSS32.BF2' })}
                     options={[
-                      { value: 8,  label: 'Small · 2mm' },
-                      { value: 12, label: 'Medium · 3mm' },
-                      { value: 16, label: 'Large · 4mm' },
-                      { value: 24, label: 'X-Large · 6mm' },
+                      { value: 8,  label: 'Small · 2mm · TSS16' },
+                      { value: 10, label: 'Medium · 2.5mm · TSS20' },
+                      { value: 12, label: 'Large · 3mm · TSS24' },
+                      { value: 16, label: 'X-Large · 4mm · TSS32' },
                     ]}
                   />
                 </div>
