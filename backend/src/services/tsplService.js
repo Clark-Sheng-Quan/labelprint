@@ -26,7 +26,7 @@ function selectFontAndMul(fontSize) {
 }
 
 function replacePlaceholders(text, orderData) {
-  return text.replace(/#\{(\w+)\}/g, (_, key) => orderData[key] ?? '');
+  return text.replace(/#\{(\w+)\}/g, (match, key) => orderData[key] || match);
 }
 
 function wrapText(text, font, mul, maxWidthDots) {

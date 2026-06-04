@@ -84,13 +84,9 @@ export const renderElementToCanvas = async (
   try {
     if (element.type === 'text') {
       // Render text element
-      ctx.fillStyle = element.color || '#000000';
-      const fontSizePx = (element.fontSize || 8) * (scale / 4);
-      let fontString = '';
-      if (element.fontWeight === 'bold') fontString += 'bold ';
-      if (element.fontStyle === 'italic') fontString += 'italic ';
-      fontString += `${fontSizePx}px ${element.fontFamily || 'Arial'}`;
-      ctx.font = fontString;
+      ctx.fillStyle = '#000000';
+      const fontSizePx = (element.fontSize || 8) * (scale / 6);
+      ctx.font = `bold ${fontSizePx}px monospace`;
       ctx.textBaseline = 'top';
       ctx.fillText(element.text || '', x, y);
     } else if (element.type === 'image' && element.imageData) {
@@ -218,6 +214,21 @@ export const fetchTSPL = async (
     console.error('Failed to fetch TSPL:', error);
     throw error;
   }
+};
+
+export const fetchRenderRaw = async (
+  businessId: string,
+  orderData: Record<string, string> = {}
+): Promise<object> => {
+  const response = await axios.post(`/label/render`, {
+    businessId,
+    orderData
+  }, {
+    headers: {
+      'Authorization': `Bearer ${POS_WEB_CONFIG.token}`
+    }
+  });
+  return response.data;
 };
 
 // Extract #{key} placeholder names from a template's text/qrcode elements

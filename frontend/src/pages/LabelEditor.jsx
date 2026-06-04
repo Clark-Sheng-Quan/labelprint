@@ -300,13 +300,9 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
       }
 
       if (el.type === 'text') {
-        ctx.fillStyle = el.color || '#000000';
-        const fontSizePx = el.fontSize * (scale / 4); 
-        let fontString = '';
-        if (el.fontWeight === 'bold') fontString += 'bold ';
-        if (el.fontStyle === 'italic') fontString += 'italic ';
-        fontString += `${fontSizePx}px ${el.fontFamily || 'Arial'}`;
-        ctx.font = fontString;
+        ctx.fillStyle = '#000000';
+        const fontSizePx = el.fontSize * (scale / 6);
+        ctx.font = `bold ${fontSizePx}px monospace`;
         ctx.textBaseline = 'top';
 
         const lineHeight = fontSizePx * 1.2;
@@ -446,8 +442,8 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
         if (el.type === 'barcode') {
           ctx.fillText('Barcode', x + w/2, y + h/2 - 5);
         } else {
-          const contentName = el.qrcodeContent === 'tea_machine' ? 'Tea Machine' : 'QR';
-          ctx.fillText(`${contentName} QR`, x + w/2, y + h/2 - 5);
+          const contentName = 'Tea Machine QR';
+          ctx.fillText(contentName, x + w/2, y + h/2 - 5);
         }
       } else if (el.type === 'image') {
         // Draw image with rounded corners using clip
@@ -1332,7 +1328,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
           { key: 'templates', icon: <LayoutOutlined />, label: getTranslation('templates') },
           { key: 'text', icon: <FontSizeOutlined />, label: getTranslation('text') },
           { key: 'params', icon: <CodeOutlined />, label: getTranslation('parameters') },
-          { key: 'image', icon: <PictureOutlined />, label: getTranslation('image') },
+          { key: 'image', icon: <PictureOutlined />, label: 'QR' },
           { key: 'shape', icon: <BorderOutlined />, label: getTranslation('shape') },
         ].map(item => (
           <div 
@@ -1383,35 +1379,18 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
           )}
           {activeSidebarItem === 'image' && (
             <div className="drawer-content">
-              <input 
-                type="file" 
-                accept="image/*"
-                id="imageUpload"
-                style={{ display: 'none' }}
-                onChange={handleImageUpload}
-              />
-              <Button 
-                block 
-                onClick={() => document.getElementById('imageUpload').click()}
-                style={{ marginBottom: 12 }}
-              >
-                {getTranslation('selectImage')}
-              </Button>
-              <Button 
-                block 
-                onClick={() => addElement('qrcode', { 
-                  x: 10, 
-                  y: 10, 
-                  width: 10, 
+              <Button
+                block
+                onClick={() => addElement('qrcode', {
+                  x: 10,
+                  y: 10,
+                  width: 10,
                   height: 10,
-                  qrcodeContent: 'tea_machine'
+                  qrcodeContent: '#{teaMachineQr}'
                 })}
               >
                 {getTranslation('addQrCode')}
               </Button>
-              <div style={{ marginTop: 20, textAlign: 'center', color: '#999', fontSize: 12 }}>
-                {getTranslation('supportedFormats')}
-              </div>
             </div>
           )}
           {activeSidebarItem === 'shape' && (
@@ -1681,14 +1660,7 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                 <div className="prop-section-title" style={{ marginTop: 20 }}>{getTranslation('qrCodeSettings')}</div>
                 <div className="prop-row">
                   <span style={{ marginRight: 8 }}>{getTranslation('content')}:</span>
-                  <Select 
-                    value={currentElement.qrcodeContent || 'tea_machine'} 
-                    style={{ flex: 1 }}
-                    onChange={v => updateSelected({ qrcodeContent: v })}
-                    options={[
-                      { value: 'tea_machine', label: 'Tea Machine' }
-                    ]}
-                  />
+                  <Input value="#{teaMachineQr}" disabled style={{ flex: 1 }} />
                 </div>
               </>
             )}
