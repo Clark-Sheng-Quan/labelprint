@@ -8,7 +8,7 @@ export default defineConfig({
     port: 7000,
     proxy: {
       '/label': {
-        target: 'http://localhost:3080',
+        target: 'http://54.90.180.79',
         changeOrigin: true
       }
     }
