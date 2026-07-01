@@ -6,35 +6,6 @@ function replacePlaceholders(text, orderData) {
   return text.replace(/#\{(\w+)\}/g, (match, key) => orderData[key] || match);
 }
 
-function isCJK(char) {
-  const code = char.charCodeAt(0);
-  return (code >= 0x4E00 && code <= 0x9FFF) ||
-         (code >= 0x3000 && code <= 0x303F) ||
-         (code >= 0xFF00 && code <= 0xFFEF);
-}
-
-function wrapBitmapText(text, fontSizeDots, maxWidthDots) {
-  const lines = [];
-  for (const segment of text.split('\n')) {
-    if (segment.length === 0) { lines.push(''); continue; }
-    let current = '';
-    let currentWidth = 0;
-    for (const char of segment) {
-      const charW = isCJK(char) ? fontSizeDots : fontSizeDots * 0.55;
-      if (currentWidth + charW > maxWidthDots && current.length > 0) {
-        lines.push(current);
-        current = char;
-        currentWidth = charW;
-      } else {
-        current += char;
-        currentWidth += charW;
-      }
-    }
-    if (current.length > 0) lines.push(current);
-  }
-  return lines.length > 0 ? lines : [''];
-}
-
 // BITMAP_TEXT is a custom command handled by the Android LabelPrintHelper:
 // it renders text as a bitmap on-device (supports Unicode/CJK) then sends as BITMAP.
 // Format: BITMAP_TEXT x,y,fontSizeDots,"text"
@@ -43,9 +14,8 @@ function renderText(el, orderData) {
   const x = dots(el.x);
   const y = dots(el.y);
   const fontSizeDots = Math.round((el.fontSize || 8) * 2);
-  const maxW = dots(el.width);
   const raw = replacePlaceholders(el.text || '', orderData);
-  const lines = wrapBitmapText(raw, fontSizeDots, maxW);
+  const lines = raw.split('\n');
   const lineH = Math.round(fontSizeDots * 1.2);
 
   return lines
