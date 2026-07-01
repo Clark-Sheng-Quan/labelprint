@@ -2,84 +2,54 @@ const CRLF = '\r\n';
 
 const dots = (mm) => Math.round(mm * 8);
 
-// TSS fonts support Chinese + English (简体中文 GB 码)
-const FONT_CHAR_WIDTH  = { 'TSS16.BF2': 16, 'TSS20.BF2': 20, 'TSS24.BF2': 24, 'TSS32.BF2': 32 };
-const FONT_CHAR_HEIGHT = { 'TSS16.BF2': 16, 'TSS20.BF2': 20, 'TSS24.BF2': 24, 'TSS32.BF2': 32 };
-
-// Pick the font + multiplier closest to the target dot size
-// editor fontSize * 2 ≈ target dots height (at 200DPI, scale=8)
-function selectFontAndMul(fontSize) {
-  const targetDots = Math.round((fontSize || 8) * 2);
-  const bases = [
-    { font: 'TSS16.BF2', baseDots: 16 },
-    { font: 'TSS20.BF2', baseDots: 20 },
-    { font: 'TSS24.BF2', baseDots: 24 },
-    { font: 'TSS32.BF2', baseDots: 32 },
-  ];
-  let best = { font: 'TSS16.BF2', mul: 1, diff: Infinity };
-  for (const { font, baseDots } of bases) {
-    const mul = Math.max(1, Math.min(10, Math.round(targetDots / baseDots)));
-    const diff = Math.abs(baseDots * mul - targetDots);
-    if (diff < best.diff) best = { font, mul, diff };
-  }
-  return best;
-}
-
 function replacePlaceholders(text, orderData) {
   return text.replace(/#\{(\w+)\}/g, (match, key) => orderData[key] || match);
 }
 
-function wrapText(text, font, mul, maxWidthDots) {
-  const charW = FONT_CHAR_WIDTH[font] * mul;
-  const maxChars = Math.floor(maxWidthDots / charW);
-  if (maxChars <= 0) return [text];
+function isCJK(char) {
+  const code = char.charCodeAt(0);
+  return (code >= 0x4E00 && code <= 0x9FFF) ||
+         (code >= 0x3000 && code <= 0x303F) ||
+         (code >= 0xFF00 && code <= 0xFFEF);
+}
 
+function wrapBitmapText(text, fontSizeDots, maxWidthDots) {
   const lines = [];
   for (const segment of text.split('\n')) {
-    if (segment.length <= maxChars) {
-      lines.push(segment);
-      continue;
-    }
-    const words = segment.split(' ');
+    if (segment.length === 0) { lines.push(''); continue; }
     let current = '';
-    for (const word of words) {
-      if (current.length === 0) {
-        current = word;
-      } else if (current.length + 1 + word.length <= maxChars) {
-        current += ' ' + word;
-      } else {
+    let currentWidth = 0;
+    for (const char of segment) {
+      const charW = isCJK(char) ? fontSizeDots : fontSizeDots * 0.55;
+      if (currentWidth + charW > maxWidthDots && current.length > 0) {
         lines.push(current);
-        current = word;
+        current = char;
+        currentWidth = charW;
+      } else {
+        current += char;
+        currentWidth += charW;
       }
     }
     if (current.length > 0) lines.push(current);
   }
-  return lines;
+  return lines.length > 0 ? lines : [''];
 }
 
+// BITMAP_TEXT is a custom command handled by the Android LabelPrintHelper:
+// it renders text as a bitmap on-device (supports Unicode/CJK) then sends as BITMAP.
+// Format: BITMAP_TEXT x,y,fontSizeDots,"text"
+// fontSizeDots = el.fontSize * 2  (editor fontSize unit → dots at 200DPI)
 function renderText(el, orderData) {
   const x = dots(el.x);
   const y = dots(el.y);
+  const fontSizeDots = Math.round((el.fontSize || 8) * 2);
   const maxW = dots(el.width);
-  
-  // Use specified font if available, otherwise auto-select
-  let font, mul;
-  if (el.fontFamily && FONT_CHAR_WIDTH[el.fontFamily]) {
-    font = el.fontFamily;
-    // Use fontSize as multiplier hint, default mul=1
-    const targetDots = Math.round((el.fontSize || 8) * 2);
-    mul = Math.max(1, Math.min(10, Math.round(targetDots / FONT_CHAR_HEIGHT[font])));
-  } else {
-    ({ font, mul } = selectFontAndMul(el.fontSize));
-  }
-  
-  const rotation = el.rotation ? Math.round(el.rotation / 90) * 90 : 0;
   const raw = replacePlaceholders(el.text || '', orderData);
-  const wrappedLines = wrapText(raw, font, mul, maxW);
-  const lineH = FONT_CHAR_HEIGHT[font] * mul;
+  const lines = wrapBitmapText(raw, fontSizeDots, maxW);
+  const lineH = Math.round(fontSizeDots * 1.2);
 
-  return wrappedLines
-    .map((line, i) => `TEXT ${x},${y + i * lineH},"${font}",${rotation},${mul},${mul},"${line.replace(/"/g, '\\"')}"`)
+  return lines
+    .map((line, i) => `BITMAP_TEXT ${x},${y + i * lineH},${fontSizeDots},"${line.replace(/"/g, '\\"')}"`)
     .join(CRLF);
 }
 
@@ -158,7 +128,6 @@ export function generateTSPL(template, orderData = {}) {
   const lines = [
     `SIZE ${width} mm,${height} mm`,
     `GAP 2 mm,0 mm`,
-    `CODEPAGE UTF-8`,
     `CLS`,
     `DIRECTION 1`,
   ];

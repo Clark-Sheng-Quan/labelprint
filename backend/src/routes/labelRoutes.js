@@ -23,41 +23,6 @@ router.get('/templates/:businessId', async (req, res) => {
   }
 });
 
-// Sync API - Get active template for POS system (requires token verification)
-// Used by POS settings to fetch the current active label template
-router.post('/sync', verifyTokenMiddleware(), async (req, res) => {
-  try {
-    const { businessId } = req.body;
-    
-    if (!businessId) {
-      return res.status(400).json({
-        success: false,
-        error: 'businessId is required'
-      });
-    }
-
-    const template = await LabelTemplate.findActiveByBusinessId(businessId);
-    
-    if (!template) {
-      return res.status(404).json({
-        success: false,
-        error: 'No active template found for this business'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: template,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error syncing template:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
 
 // Get single template
 router.get('/template/:id', async (req, res) => {
@@ -183,41 +148,6 @@ router.put('/template/:id/activate', async (req, res) => {
   }
 });
 
-// Render active template as TSPL commands for direct printing
-router.post('/render', verifyTokenMiddleware(), async (req, res) => {
-  try {
-    const { businessId, orderData = {} } = req.body;
-
-    if (!businessId) {
-      return res.status(400).json({
-        success: false,
-        error: 'businessId is required'
-      });
-    }
-
-    const template = await LabelTemplate.findActiveByBusinessId(businessId);
-
-    if (!template) {
-      return res.status(404).json({
-        success: false,
-        error: 'No active template found for this business'
-      });
-    }
-
-    const tspl = generateTSPL(template, orderData);
-
-    res.json({
-      success: true,
-      tspl
-    });
-  } catch (error) {
-    console.error('Error rendering template:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
 
 // Delete template
 router.delete('/template/:id', async (req, res) => {
@@ -234,6 +164,30 @@ router.delete('/template/:id', async (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+// GET /label/render?business_id=xxx
+router.get('/render', verifyTokenMiddleware(), async (req, res) => {
+  try {
+    const businessId = req.query.business_id;
+
+    if (!businessId) {
+      return res.status(400).json({ success: false, error: 'businessId is required' });
+    }
+
+    const template = await LabelTemplate.findActiveByBusinessId(businessId);
+
+    if (!template) {
+      return res.status(404).json({ success: false, error: 'No active template found for this business' });
+    }
+
+    const tspl = generateTSPL(template, {});
+
+    res.json({ success: true, tspl, timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error('Error rendering template:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

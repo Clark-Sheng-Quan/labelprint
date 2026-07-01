@@ -1673,12 +1673,14 @@ export default function LabelEditor({ onBack, currentTemplate, businessId = null
                   <Select
                     value={currentElement.fontSize}
                     style={{ flex: 1 }}
-                    onChange={v => updateSelected({ fontSize: v, fontFamily: v === 8 ? 'TSS16.BF2' : v === 10 ? 'TSS20.BF2' : v === 12 ? 'TSS24.BF2' : 'TSS32.BF2' })}
+                    onChange={v => updateSelected({ fontSize: v })}
                     options={[
-                      { value: 8,  label: 'Small · 2mm · TSS16' },
-                      { value: 10, label: 'Medium · 2.5mm · TSS20' },
-                      { value: 12, label: 'Large · 3mm · TSS24' },
-                      { value: 16, label: 'X-Large · 4mm · TSS32' },
+                      { value: 6,  label: 'XS · 1.5mm' },
+                      { value: 8,  label: 'S · 2mm' },
+                      { value: 10, label: 'M · 2.5mm' },
+                      { value: 12, label: 'L · 3mm' },
+                      { value: 16, label: 'XL · 4mm' },
+                      { value: 24, label: 'XXL · 6mm' },
                     ]}
                   />
                 </div>
