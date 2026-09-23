@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { POS_TOKEN } from '../config/constants';
 
-// Production: use empty string so requests go to same origin (nginx proxies /label to backend)
-// Local dev: vite.config.js proxies /label/template(s) to localhost:3080
-const API_BASE_URL = 'http://54.90.180.79';
+// Use a same-origin path by default; company hosting can override this at build time.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const client = axios.create({
   baseURL: API_BASE_URL,

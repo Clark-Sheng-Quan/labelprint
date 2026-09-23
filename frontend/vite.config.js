@@ -10,6 +10,7 @@ export default defineConfig({
     proxy: {
       '/label/templates': 'http://localhost:3080',
       '/label/template': 'http://localhost:3080',
+      '/label/render': 'http://localhost:3080',
     },
     watch: {
       usePolling: true,

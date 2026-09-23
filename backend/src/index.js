@@ -11,7 +11,7 @@ import labelRoutes from './routes/labelRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3080;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,15 +21,10 @@ const __dirname = path.dirname(__filename);
 function setupCORS() {
   const corsOptions = {
     origin: function(origin, callback) {
-      const allowedOrigins = [
-        'http://www.vend88.com.au',
-        'https://www.vend88.com.au/',
-        'https://dev.vend88.com',
-        'http://dev.vend88.com/',
-        'https://54.90.180.79',     // Production server
-        'http://vend-88.s3-website-us-east-1.amazonaws.com',   // S3 frontend (http)
-        'https://vend-88.s3-website-us-east-1.amazonaws.com'    // S3 frontend (https)
-      ];
+      const allowedOrigins = (process.env.CORS_ORIGIN || '')
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean);
 
       // In development, allow all origins
       if (NODE_ENV === 'development') {
@@ -99,7 +94,7 @@ async function startServer() {
     console.log('Database initialized successfully');
 
     await LabelTemplate.initializeTable();
-    console.log('Tables initialized successfully');
+    console.log('MongoDB indexes initialized successfully');
 
     app.listen(PORT, () => {
       console.log(`Label Printer Backend running on port ${PORT}`);

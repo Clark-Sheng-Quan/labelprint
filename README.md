@@ -6,21 +6,21 @@ A robust, full-stack solution for designing, managing, and synchronizing POS lab
 
 The system consists of three main components:
 
-1.  **Frontend Editor (S3)**: A React-based web application for designing templates. Deployed on AWS S3.
-2.  **Backend API (EC2/Docker)**: A Node.js Express server handling template storage and synchronization. Deployed on AWS EC2 via Docker.
+1.  **Frontend Editor**: A React-based web application for designing templates.
+2.  **Backend API**: A Node.js Express server handling template storage and rendering.
 3.  **POS Integration (Client)**: A lightweight integration layer for POS systems to fetch and render active templates locally.
 
 ```text
 [ Designing ]               [ Storage ]                [ Printing ]
-S3 Frontend Designer  ──▶  EC2 Backend API  ◀──  POS Terminal Client
-(React/AntD)             (Express/PostgreSQL)     (Label Rendering)
+Company Frontend       ──▶  Company Backend API  ◀──  POS Terminal Client
+(React/AntD)                 (Express/MongoDB)        (Label Rendering)
 ```
 
 ## 🚀 Tech Stack
 
 -   **Frontend**: React 18, Vite, Ant Design, Axios.
--   **Backend**: Node.js, Express, PostgreSQL (AWS RDS).
--   **Infrastructure**: Docker, Docker Compose, Nginx, AWS S3, AWS EC2.
+-   **Backend**: Node.js, Express, MongoDB.
+-   **Infrastructure**: Docker, Docker Compose, Nginx.
 
 ## ✨ Key Features
 
@@ -31,7 +31,7 @@ S3 Frontend Designer  ──▶  EC2 Backend API  ◀──  POS Terminal Client
 -   **Template Management**:
     -   Create, update, and delete multiple templates per business.
     -   "Set Active" functionality for instant POS synchronization.
--   **Synchronization API**: High-performance endpoint for POS devices to retrieve the latest active design.
+-   **Render API**: Returns TSPL for the latest active design.
 -   **Multi-language Support**: Full English and Chinese (Simplified) localization.
 
 ## 🛠 Getting Started
@@ -40,7 +40,7 @@ S3 Frontend Designer  ──▶  EC2 Backend API  ◀──  POS Terminal Client
 
 -   Node.js (v18+)
 -   Docker and Docker Compose
--   AWS CLI (for deployment)
+-   A Linux company server with Docker Engine and Docker Compose v2
 
 ### Local Development
 
@@ -71,36 +71,32 @@ The backend runs on port `3080`. All designers and POS clients communicate throu
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/label/sync` | **Sync API**: POS client fetches the active template. |
+| `GET` | `/label/render?business_id=...` | Returns TSPL for the active template. |
 | `GET` | `/label/templates/:businessId` | List all templates for a specific business. |
 | `POST` | `/label/template` | Create a new template. |
 | `PUT` | `/label/template/:id` | Update an existing template. |
 | `PUT` | `/label/template/:id/activate` | Set a template as the active one for a business. |
 
-### Sync API Example
+### Render API Example
 
 ```bash
-curl -X POST http://<server-ip>/label/sync \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <pos-token>" \
-  -d '{"businessId": "67295c445242136caa4511d4"}'
+curl "http://<server-ip>/label/render?business_id=67295c445242136caa4511d4" \
+    -H "Authorization: Bearer <pos-token>"
 ```
 
 ## 🚢 Deployment
 
-### Backend (Docker on EC2)
-The backend is managed via Docker. Use the provided deployment script to update the Nginx configuration:
+### Company server deployment
+Copy the project to the company server, create `backend/.env` from `backend/.env.example`, and set the company frontend URL and POS API settings. The default Compose file starts MongoDB and the backend:
 ```bash
-bash deploy-nginx.sh
+cd backend
+docker compose up -d --build
+docker compose ps
+docker compose logs --tail=100 backend
+curl http://127.0.0.1:3000/health
 ```
 
-### Frontend (S3)
-The designer is built and synced to AWS S3:
-```bash
-cd frontend
-npm run build
-aws s3 sync dist/ s3://your-bucket-name/label/ --delete
-```
+MongoDB is hosted by the company-provided MongoDB service. The backend server only runs the application container and connects using `MONGODB_URI`; no local MongoDB container or database volume is required.
 
 ## 📂 Project Structure
 

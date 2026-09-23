@@ -1,33 +1,15 @@
-import { db } from '../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '../config/database.js';
 
 export class LabelTemplate {
   static async initializeTable() {
-    const query = `
-      CREATE TABLE IF NOT EXISTS label_templates (
-        id VARCHAR(255) PRIMARY KEY,
-        business_id VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        width DECIMAL(10, 2),
-        height DECIMAL(10, 2),
-        template_config JSONB NOT NULL DEFAULT '{"elements":[]}',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        is_active BOOLEAN DEFAULT false
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_label_templates_business_id 
-      ON label_templates(business_id);
-      
-      CREATE INDEX IF NOT EXISTS idx_label_templates_business_active
-      ON label_templates(business_id, is_active);
-    `;
-
     try {
-      await db.query(query);
-      console.log('label_templates table initialized');
+      const collection = getDatabase().collection('label_templates');
+      await collection.createIndex({ business_id: 1 });
+      await collection.createIndex({ business_id: 1, is_active: 1 });
+      console.log('label_templates collection initialized');
     } catch (error) {
-      console.error('Failed to initialize label_templates table:', error);
+      console.error('Failed to initialize label_templates collection:', error);
       throw error;
     }
   }
@@ -35,13 +17,20 @@ export class LabelTemplate {
   static async create(businessId, name, width, height, templateConfig, isActive = false) {
     const id = uuidv4();
     try {
-      const result = await db.one(
-        `INSERT INTO label_templates (id, business_id, name, width, height, template_config, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id, business_id, name, width, height, template_config, created_at, updated_at, is_active`,
-        [id, businessId, name, width || 60, height || 40, JSON.stringify(templateConfig || { elements: [] }), isActive]
-      );
-      return this._formatTemplate(result);
+      const now = new Date();
+      const document = {
+        id,
+        business_id: businessId,
+        name,
+        width: width || 60,
+        height: height || 40,
+        template_config: templateConfig || { elements: [] },
+        created_at: now,
+        updated_at: now,
+        is_active: isActive
+      };
+      await getDatabase().collection('label_templates').insertOne(document);
+      return this._formatTemplate(document);
     } catch (error) {
       console.error('Failed to create label template:', error);
       throw error;
@@ -50,11 +39,7 @@ export class LabelTemplate {
 
   static async findById(id) {
     try {
-      const result = await db.oneOrNone(
-        `SELECT id, business_id, name, width, height, template_config, created_at, updated_at, is_active 
-         FROM label_templates WHERE id = $1`,
-        [id]
-      );
+      const result = await getDatabase().collection('label_templates').findOne({ id });
       return result ? this._formatTemplate(result) : null;
     } catch (error) {
       console.error('Failed to find label template:', error);
@@ -64,11 +49,10 @@ export class LabelTemplate {
 
   static async findByBusinessId(businessId) {
     try {
-      const results = await db.any(
-        `SELECT id, business_id, name, width, height, template_config, created_at, updated_at, is_active 
-         FROM label_templates WHERE business_id = $1 ORDER BY updated_at DESC`,
-        [businessId]
-      );
+      const results = await getDatabase().collection('label_templates')
+        .find({ business_id: businessId })
+        .sort({ updated_at: -1 })
+        .toArray();
       return results.map(t => this._formatTemplate(t));
     } catch (error) {
       console.error('Failed to find label templates:', error);
@@ -78,11 +62,8 @@ export class LabelTemplate {
 
   static async findActiveByBusinessId(businessId) {
     try {
-      const result = await db.oneOrNone(
-        `SELECT id, business_id, name, width, height, template_config, created_at, updated_at, is_active 
-         FROM label_templates WHERE business_id = $1 AND is_active = true ORDER BY updated_at DESC LIMIT 1`,
-        [businessId]
-      );
+      const result = await getDatabase().collection('label_templates')
+        .findOne({ business_id: businessId, is_active: true }, { sort: { updated_at: -1 } });
       return result ? this._formatTemplate(result) : null;
     } catch (error) {
       console.error('Failed to find active label template:', error);
@@ -92,13 +73,11 @@ export class LabelTemplate {
 
   static async update(id, name, width, height, templateConfig) {
     try {
-      const result = await db.one(
-        `UPDATE label_templates 
-         SET name = $2, width = $3, height = $4, template_config = $5, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $1
-         RETURNING id, business_id, name, width, height, template_config, created_at, updated_at, is_active`,
-        [id, name, width, height, JSON.stringify(templateConfig)]
+      await getDatabase().collection('label_templates').updateOne(
+        { id },
+        { $set: { name, width, height, template_config: templateConfig, updated_at: new Date() } }
       );
+      const result = await getDatabase().collection('label_templates').findOne({ id });
       return this._formatTemplate(result);
     } catch (error) {
       console.error('Failed to update label template:', error);
@@ -108,7 +87,7 @@ export class LabelTemplate {
 
   static async delete(id) {
     try {
-      await db.none('DELETE FROM label_templates WHERE id = $1', [id]);
+      await getDatabase().collection('label_templates').deleteOne({ id });
     } catch (error) {
       console.error('Failed to delete label template:', error);
       throw error;
@@ -117,20 +96,16 @@ export class LabelTemplate {
 
   static async setActive(id, businessId) {
     try {
-      // Deactivate all other templates for this business
-      await db.none(
-        'UPDATE label_templates SET is_active = false WHERE business_id = $1 AND id != $2',
-        [businessId, id]
+      const collection = getDatabase().collection('label_templates');
+      await collection.updateMany(
+        { business_id: businessId, id: { $ne: id } },
+        { $set: { is_active: false } }
       );
-      
-      // Activate this template
-      const result = await db.one(
-        `UPDATE label_templates 
-         SET is_active = true, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $1
-         RETURNING id, business_id, name, width, height, template_config, created_at, updated_at, is_active`,
-        [id]
+      await collection.updateOne(
+        { id, business_id: businessId },
+        { $set: { is_active: true, updated_at: new Date() } }
       );
+      const result = await collection.findOne({ id, business_id: businessId });
       return this._formatTemplate(result);
     } catch (error) {
       console.error('Failed to set active template:', error);
@@ -139,21 +114,19 @@ export class LabelTemplate {
   }
 
   // Helper method to format template data
-  static _formatTemplate(row) {
-    if (!row) return null;
+  static _formatTemplate(document) {
+    if (!document) return null;
     
     return {
-      id: row.id,
-      businessId: row.business_id,
-      name: row.name,
-      width: parseFloat(row.width) || 60,
-      height: parseFloat(row.height) || 40,
-      templateConfig: typeof row.template_config === 'string' 
-        ? JSON.parse(row.template_config) 
-        : (row.template_config || { elements: [] }),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      isActive: row.is_active
+      id: document.id,
+      businessId: document.business_id,
+      name: document.name,
+      width: parseFloat(document.width) || 60,
+      height: parseFloat(document.height) || 40,
+      templateConfig: document.template_config || { elements: [] },
+      createdAt: document.created_at,
+      updatedAt: document.updated_at,
+      isActive: document.is_active
     };
   }
 }
